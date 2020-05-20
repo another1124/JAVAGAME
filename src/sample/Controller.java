@@ -13,6 +13,7 @@ import java.net.URL;
 import java.util.ResourceBundle;
 
 public class Controller implements Initializable {
+
     public Button BT11,BT12,BT13,BT14,BT15,BT16,BT17,BT18,BT19,BT110,BT111,BT112;
     public Button BT21,BT22,BT23,BT24,BT25,BT26,BT27,BT28,BT29,BT210,BT211,BT212;
     public Button BT31,BT32,BT33,BT34,BT35,BT36,BT37,BT38,BT39,BT310,BT311,BT312;
