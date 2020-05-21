@@ -10,6 +10,10 @@ import javafx.util.Duration;
 
 import javax.naming.spi.InitialContextFactory;
 import java.net.URL;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ResourceBundle;
 
 public class Controller implements Initializable {
@@ -26,6 +30,9 @@ public class Controller implements Initializable {
     public Button BT101,BT102,BT103,BT104,BT105,BT106,BT107,BT108,BT109,BT1010,BT1011,BT1012;
 
     public  final long duration = 30000;
+    public Button turnend;
+    public Button testturn;
+
     int mwx=6,mwy=10;
     int a, b, c = 0, d;
     boolean mywtrun=true,mywac=false,enwtrun=false;
@@ -44,8 +51,41 @@ public class Controller implements Initializable {
             //    System.out.println("TEST");
            // });
             OnAction();
+            turn();
+            connet();
     }
+    public void connet()
+    {
+        String mysqlstring = "jdbc:mysql://localhost:80/GAME?user=root&password=123qwe" +
+                "&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8";
+        try {
+            Connection connection = DriverManager.getConnection(mysqlstring);
+            System.out.println("Connected");
+            Statement statement = connection.createStatement();
 
+           // int row = statement.executeUpdate(sql);
+          //  System.out.println("Inserted " + row);
+        }catch (SQLException ex)
+        {
+            System.out.println("Cannot connect");
+            ex.printStackTrace();
+        }
+    }
+    public  void turn()
+    {
+        turnend.setOnAction(e->{
+            enwtrun=true;
+            textclear(1);
+            mywac=false;
+            mywtrun=false;
+        });
+        testturn.setOnAction(e->{
+            enwtrun=false;
+            mywtrun=true;
+            textclear(0);
+            textclear(mwx,mwy,1);
+        });
+    }
     public void range(int x,int y)
     {
             System.out.println("TTTT");
@@ -66,7 +106,7 @@ public class Controller implements Initializable {
                 }
             }
     }
-    public  void textclear(int z)//control z=2clearText z=1button disable
+    public  void textclear(int z)//control z=2clearText z=1button disable z=0 button enable
     {
         int a,b;
         for(a=1;a<=10;a++)
@@ -79,7 +119,6 @@ public class Controller implements Initializable {
     }
     public  void textclear(int c,int d,int z)//Exception handling (例外處理)
     {
-
         int a,b;
         for(a=1;a<=10;a++)
         {
