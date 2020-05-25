@@ -3,7 +3,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<GridPane alignment="center" prefHeight="334.0" prefWidth="303.0" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controller">
+<GridPane alignment="center" prefHeight="800.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controller">
    <children>
       <Button fx:id="BT11" disable="true" mnemonicParsing="false" prefHeight="25.0" prefWidth="40.0" text=" " GridPane.columnIndex="1" GridPane.rowIndex="1" />
       <Button fx:id="BT12" disable="true" mnemonicParsing="false" prefHeight="25.0" prefWidth="40.0" text=" " GridPane.columnIndex="1" GridPane.rowIndex="2" />
@@ -128,6 +128,12 @@
       <Button fx:id="turnend" disable="false" mnemonicParsing="false" prefHeight="30.0" prefWidth="80.0" text="回合結束" GridPane.columnIndex="11" GridPane.columnSpan="2" GridPane.rowIndex="5" />
       <Label text="--------------------------------------------------------------------------------------------------" GridPane.columnIndex="1" GridPane.columnSpan="10" GridPane.rowIndex="13" />
       <Button fx:id="testturn" disable="false" mnemonicParsing="false" prefHeight="30.0" prefWidth="80.0" text="敵回合結束" GridPane.columnIndex="11" GridPane.columnSpan="2" GridPane.rowIndex="2"/>
+      <Button fx:id="ATTACK" disable="true" mnemonicParsing="false" prefHeight="30.0" prefWidth="80.0" text="攻擊" GridPane.columnIndex="2" GridPane.columnSpan="2" GridPane.rowIndex="14"/>
+      <Button fx:id="WAIT" disable="true" mnemonicParsing="false" prefHeight="30.0" prefWidth="80.0" text="待命" GridPane.columnIndex="5" GridPane.columnSpan="2" GridPane.rowIndex="14"/>
+      <Label text="我方戰士HP:" GridPane.columnIndex="11" GridPane.columnSpan="1" GridPane.rowIndex="9" />
+      <Label text="敵方戰士HP:" GridPane.columnIndex="11" GridPane.columnSpan="1" GridPane.rowIndex="7" />
+      <Label fx:id="enwhp" text="150" GridPane.columnIndex="12" GridPane.columnSpan="1" GridPane.rowIndex="7" />
+      <Label fx:id="mywhp" text="150" GridPane.columnIndex="12" GridPane.columnSpan="1" GridPane.rowIndex="9" />
 
    </children>
    <columnConstraints>

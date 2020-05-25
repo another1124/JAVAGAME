@@ -10,10 +10,8 @@ import javafx.util.Duration;
 
 import javax.naming.spi.InitialContextFactory;
 import java.net.URL;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.nio.file.Watchable;
+import java.sql.*;
 import java.util.ResourceBundle;
 
 public class Controller implements Initializable {
@@ -32,14 +30,21 @@ public class Controller implements Initializable {
     public  final long duration = 30000;
     public Button turnend;
     public Button testturn;
+    public Button ATTACK;
+    public Button WAIT;
+    public Label enwhp;
+    public Label mywhp;
 
-    int mwx=6,mwy=10;
+    int mwx=6,mwy=10,ewx=6,ewy=2,dpc=1;
     int a, b, c = 0, d;
     boolean mywtrun=true,mywac=false,enwtrun=false;
+    boolean WATKflag=false,ATKflag=false;
+    WAR mwar=new WAR();
+    WAR ewar=new WAR();
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-
            boolean flag = false;
+           BT62.setText("敵戰");
             BT610.setText("我戰");
              BT610.setDisable(false);
              BT612.setText(" ");
@@ -50,21 +55,96 @@ public class Controller implements Initializable {
                 BT512.setDisable(false);*/
             //    System.out.println("TEST");
            // });
-            OnAction();
-            turn();
-            connet();
+           ini();
+           getid();
+           OnAction();
+           turn();
+           ATK();
     }
-    public void connet()
+    public  void connet()
+    {
+        String mysqlstring = "jdbc:mysql://localhost:80/GAME?user=root&password=123qwe" +
+                "&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8";
+        PreparedStatement statement = null;
+        try{
+            Connection connection = DriverManager.getConnection(mysqlstring);
+            String sql ="update connet set wx=?,wy=?,whp=?,enwhp=? where playerid=? ";
+            statement = connection.prepareStatement(sql);
+            statement.setInt(1,mwx);
+            statement.setInt(2,mwy);
+            statement.setInt(3,mwar.hp);
+            statement.setInt(4,ewar.hp);
+            statement.setInt(5,dpc);
+            statement.executeUpdate();
+        }catch (SQLException ee)
+        {
+            System.out.println("ssss");
+            ee.printStackTrace();
+        }
+    }
+    public void ATK()
+    {
+        ATTACK.setOnAction(e->{
+            if(mywac)
+            {
+                ATKflag=true;
+                WATKflag=true;
+                range(mwx,mwy,1);
+                mywac=false;
+            }
+        });
+        WAIT.setOnAction(e->{
+            ATTACK.setDisable(true);
+            WAIT.setDisable(true);
+            mywac=false;
+            GAN(mwx,mwy,1);
+        });
+    }
+    public  void getid()
     {
         String mysqlstring = "jdbc:mysql://localhost:80/GAME?user=root&password=123qwe" +
                 "&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8";
         try {
-            Connection connection = DriverManager.getConnection(mysqlstring);
-            System.out.println("Connected");
-            Statement statement = connection.createStatement();
 
-           // int row = statement.executeUpdate(sql);
-          //  System.out.println("Inserted " + row);
+            Connection connection = DriverManager.getConnection(mysqlstring);
+            String sql = "insert into connet (wx,wy,playerid,enwhp,whp) values ('"+
+                    Integer.toString(mwx) + "','" +
+                    Integer.toString(mwy) + "','" +
+                    Integer.toString(dpc) + "','" +
+                    Integer.toString(ewar.hp) + "','" +
+                    Integer.toString(mwar.hp) +
+                    "');";
+            Statement statement = connection.createStatement();
+            statement.executeUpdate(sql);
+        }catch (SQLException ee)
+        {
+                System.out.println("ss");
+                ee.printStackTrace();
+        }
+
+    }
+    public void ini()
+    {
+        String mysqlstring = "jdbc:mysql://localhost:80/GAME?user=root&password=123qwe" +
+                "&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8";
+        Connection connection = null;
+       PreparedStatement statement = null;
+        try {
+           connection = DriverManager.getConnection(mysqlstring);
+            System.out.println("Connected");
+
+            String sql = "Select wx,wy,playerid,enwhp,whp From connet ";
+
+
+            statement = connection.prepareStatement(sql);
+           // statement.setString(1,"1");
+            ResultSet resultSet = statement.executeQuery();
+
+            while (resultSet.next())
+            {
+                dpc+=Integer.parseInt(resultSet.getString("playerid"));
+                System.out.println(resultSet.getString("playerid"));
+            }
         }catch (SQLException ex)
         {
             System.out.println("Cannot connect");
@@ -78,6 +158,11 @@ public class Controller implements Initializable {
             textclear(1);
             mywac=false;
             mywtrun=false;
+            ATKflag=false;//??????
+            WATKflag=false;
+            ATTACK.setDisable(true);
+            WAIT.setDisable(true);
+            connet();
         });
         testturn.setOnAction(e->{
             enwtrun=false;
@@ -86,7 +171,19 @@ public class Controller implements Initializable {
             textclear(mwx,mwy,1);
         });
     }
-    public void range(int x,int y)
+    public void atkenw()
+    {
+        if(WATKflag==true) {
+            WATKflag = false;
+            ewar.hp-=mwar.atk;
+            enwhp.setText(Integer.toString(ewar.hp));
+            textclear(mwx,mwy,1);
+            ATTACK.setDisable(true);
+            WAIT.setDisable(true);
+            GAN(mwx,mwy,1);
+        }
+    }
+    public void range(int x,int y,int z)
     {
             System.out.println("TTTT");
             mwx=x; mwy=y;
@@ -100,7 +197,7 @@ public class Controller implements Initializable {
                         c += mwy - b;
                     else
                         c += b-mwy;
-                    if (c <= 2)
+                    if (c <= z)
                         GAN(a, b,0);
                     c = 0;
                 }
@@ -120,13 +217,17 @@ public class Controller implements Initializable {
     public  void textclear(int c,int d,int z)//Exception handling (例外處理)
     {
         int a,b;
-        for(a=1;a<=10;a++)
-        {
-            for(b=1;b<=12;b++)
-            {
-                if(a!=c || b!=d)
-                GAN(a,b,z);
+        if(z!=22) {
+            for (a = 1; a <= 10; a++) {
+                for (b = 1; b <= 12; b++) {
+                    if (a != c || b != d)
+                        GAN(a, b, z);
+                }
             }
+        }
+        else
+        {
+            GAN(c,d,2);
         }
     }
 
@@ -134,2400 +235,3480 @@ public class Controller implements Initializable {
     {
         BT11.setOnAction(e->{
             //ssss2
-            if(BT11.getText()=="我戰" && mywtrun==true)
+            if(BT11.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT11.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(1,1);
+                range(1,1,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 1;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT11.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT12.setOnAction(e->{
             //ssss2
-            if(BT12.getText()=="我戰" && mywtrun==true)
+            if(BT12.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT12.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(1,2);
+                range(1,2,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 2;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT12.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT13.setOnAction(e->{
             //ssss2
-            if(BT13.getText()=="我戰" && mywtrun==true)
+            if(BT13.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT13.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(1,3);
+                range(1,3,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 3;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT13.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT14.setOnAction(e->{
             //ssss2
-            if(BT14.getText()=="我戰" && mywtrun==true)
+            if(BT14.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT14.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(1,4);
+                range(1,4,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 4;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT14.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT15.setOnAction(e->{
             //ssss2
-            if(BT15.getText()=="我戰" && mywtrun==true)
+            if(BT15.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT15.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(1,5);
+                range(1,5,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 5;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT15.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT16.setOnAction(e->{
             //ssss2
-            if(BT16.getText()=="我戰" && mywtrun==true)
+            if(BT16.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT16.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(1,6);
+                range(1,6,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 6;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT16.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT17.setOnAction(e->{
             //ssss2
-            if(BT17.getText()=="我戰" && mywtrun==true)
+            if(BT17.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT17.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(1,7);
+                range(1,7,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 7;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT17.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT18.setOnAction(e->{
             //ssss2
-            if(BT18.getText()=="我戰" && mywtrun==true)
+            if(BT18.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT18.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(1,8);
+                range(1,8,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 8;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT18.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT19.setOnAction(e->{
             //ssss2
-            if(BT19.getText()=="我戰" && mywtrun==true)
+            if(BT19.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT19.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(1,9);
+                range(1,9,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 9;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT19.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT110.setOnAction(e->{
             //ssss2
-            if(BT110.getText()=="我戰" && mywtrun==true)
+            if(BT110.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT110.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(1,10);
+                range(1,10,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 10;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT110.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT111.setOnAction(e->{
             //ssss2
-            if(BT111.getText()=="我戰" && mywtrun==true)
+            if(BT111.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT111.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(1,11);
+                range(1,11,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 11;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT111.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT112.setOnAction(e->{
             //ssss2
-            if(BT112.getText()=="我戰" && mywtrun==true)
+            if(BT112.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT112.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(1,12);
+                range(1,12,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 12;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT112.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT21.setOnAction(e->{
             //ssss2
-            if(BT21.getText()=="我戰" && mywtrun==true)
+            if(BT21.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT21.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(2,1);
+                range(2,1,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 1;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT21.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT22.setOnAction(e->{
             //ssss2
-            if(BT22.getText()=="我戰" && mywtrun==true)
+            if(BT22.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT22.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(2,2);
+                range(2,2,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 2;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT22.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT23.setOnAction(e->{
             //ssss2
-            if(BT23.getText()=="我戰" && mywtrun==true)
+            if(BT23.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT23.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(2,3);
+                range(2,3,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 3;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT23.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT24.setOnAction(e->{
             //ssss2
-            if(BT24.getText()=="我戰" && mywtrun==true)
+            if(BT24.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT24.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(2,4);
+                range(2,4,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 4;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT24.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT25.setOnAction(e->{
             //ssss2
-            if(BT25.getText()=="我戰" && mywtrun==true)
+            if(BT25.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT25.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(2,5);
+                range(2,5,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 5;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT25.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT26.setOnAction(e->{
             //ssss2
-            if(BT26.getText()=="我戰" && mywtrun==true)
+            if(BT26.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT26.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(2,6);
+                range(2,6,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 6;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT26.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT27.setOnAction(e->{
             //ssss2
-            if(BT27.getText()=="我戰" && mywtrun==true)
+            if(BT27.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT27.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(2,7);
+                range(2,7,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 7;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT27.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT28.setOnAction(e->{
             //ssss2
-            if(BT28.getText()=="我戰" && mywtrun==true)
+            if(BT28.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT28.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(2,8);
+                range(2,8,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 8;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT28.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT29.setOnAction(e->{
             //ssss2
-            if(BT29.getText()=="我戰" && mywtrun==true)
+            if(BT29.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT29.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(2,9);
+                range(2,9,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 9;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT29.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT210.setOnAction(e->{
             //ssss2
-            if(BT210.getText()=="我戰" && mywtrun==true)
+            if(BT210.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT210.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(2,10);
+                range(2,10,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 10;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT210.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT211.setOnAction(e->{
             //ssss2
-            if(BT211.getText()=="我戰" && mywtrun==true)
+            if(BT211.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT211.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(2,11);
+                range(2,11,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 11;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT211.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT212.setOnAction(e->{
             //ssss2
-            if(BT212.getText()=="我戰" && mywtrun==true)
+            if(BT212.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT212.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(2,12);
+                range(2,12,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 12;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT212.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT31.setOnAction(e->{
             //ssss2
-            if(BT31.getText()=="我戰" && mywtrun==true)
+            if(BT31.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT31.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(3,1);
+                range(3,1,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 1;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT31.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT32.setOnAction(e->{
             //ssss2
-            if(BT32.getText()=="我戰" && mywtrun==true)
+            if(BT32.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT32.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(3,2);
+                range(3,2,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 2;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT32.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT33.setOnAction(e->{
             //ssss2
-            if(BT33.getText()=="我戰" && mywtrun==true)
+            if(BT33.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT33.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(3,3);
+                range(3,3,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 3;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT33.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT34.setOnAction(e->{
             //ssss2
-            if(BT34.getText()=="我戰" && mywtrun==true)
+            if(BT34.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT34.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(3,4);
+                range(3,4,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 4;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT34.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT35.setOnAction(e->{
             //ssss2
-            if(BT35.getText()=="我戰" && mywtrun==true)
+            if(BT35.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT35.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(3,5);
+                range(3,5,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 5;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT35.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT36.setOnAction(e->{
             //ssss2
-            if(BT36.getText()=="我戰" && mywtrun==true)
+            if(BT36.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT36.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(3,6);
+                range(3,6,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 6;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT36.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT37.setOnAction(e->{
             //ssss2
-            if(BT37.getText()=="我戰" && mywtrun==true)
+            if(BT37.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT37.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(3,7);
+                range(3,7,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 7;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT37.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT38.setOnAction(e->{
             //ssss2
-            if(BT38.getText()=="我戰" && mywtrun==true)
+            if(BT38.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT38.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(3,8);
+                range(3,8,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 8;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT38.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT39.setOnAction(e->{
             //ssss2
-            if(BT39.getText()=="我戰" && mywtrun==true)
+            if(BT39.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT39.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(3,9);
+                range(3,9,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 9;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT39.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT310.setOnAction(e->{
             //ssss2
-            if(BT310.getText()=="我戰" && mywtrun==true)
+            if(BT310.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT310.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(3,10);
+                range(3,10,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 10;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT310.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT311.setOnAction(e->{
             //ssss2
-            if(BT311.getText()=="我戰" && mywtrun==true)
+            if(BT311.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT311.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(3,11);
+                range(3,11,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 11;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT311.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT312.setOnAction(e->{
             //ssss2
-            if(BT312.getText()=="我戰" && mywtrun==true)
+            if(BT312.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT312.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(3,12);
+                range(3,12,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 12;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT312.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT41.setOnAction(e->{
             //ssss2
-            if(BT41.getText()=="我戰" && mywtrun==true)
+            if(BT41.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT41.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(4,1);
+                range(4,1,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 1;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT41.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT42.setOnAction(e->{
             //ssss2
-            if(BT42.getText()=="我戰" && mywtrun==true)
+            if(BT42.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT42.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(4,2);
+                range(4,2,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 2;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT42.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT43.setOnAction(e->{
             //ssss2
-            if(BT43.getText()=="我戰" && mywtrun==true)
+            if(BT43.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT43.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(4,3);
+                range(4,3,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 3;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT43.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT44.setOnAction(e->{
             //ssss2
-            if(BT44.getText()=="我戰" && mywtrun==true)
+            if(BT44.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT44.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(4,4);
+                range(4,4,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 4;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT44.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT45.setOnAction(e->{
             //ssss2
-            if(BT45.getText()=="我戰" && mywtrun==true)
+            if(BT45.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT45.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(4,5);
+                range(4,5,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 5;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT45.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT46.setOnAction(e->{
             //ssss2
-            if(BT46.getText()=="我戰" && mywtrun==true)
+            if(BT46.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT46.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(4,6);
+                range(4,6,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 6;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT46.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT47.setOnAction(e->{
             //ssss2
-            if(BT47.getText()=="我戰" && mywtrun==true)
+            if(BT47.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT47.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(4,7);
+                range(4,7,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 7;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT47.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT48.setOnAction(e->{
             //ssss2
-            if(BT48.getText()=="我戰" && mywtrun==true)
+            if(BT48.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT48.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(4,8);
+                range(4,8,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 8;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT48.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT49.setOnAction(e->{
             //ssss2
-            if(BT49.getText()=="我戰" && mywtrun==true)
+            if(BT49.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT49.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(4,9);
+                range(4,9,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 9;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT49.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT410.setOnAction(e->{
             //ssss2
-            if(BT410.getText()=="我戰" && mywtrun==true)
+            if(BT410.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT410.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(4,10);
+                range(4,10,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 10;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT410.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT411.setOnAction(e->{
             //ssss2
-            if(BT411.getText()=="我戰" && mywtrun==true)
+            if(BT411.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT411.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(4,11);
+                range(4,11,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 11;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT411.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT412.setOnAction(e->{
             //ssss2
-            if(BT412.getText()=="我戰" && mywtrun==true)
+            if(BT412.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT412.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(4,12);
+                range(4,12,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 12;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT412.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT51.setOnAction(e->{
             //ssss2
-            if(BT51.getText()=="我戰" && mywtrun==true)
+            if(BT51.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT51.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(5,1);
+                range(5,1,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 1;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT51.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT52.setOnAction(e->{
             //ssss2
-            if(BT52.getText()=="我戰" && mywtrun==true)
+            if(BT52.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT52.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(5,2);
+                range(5,2,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 2;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT52.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT53.setOnAction(e->{
             //ssss2
-            if(BT53.getText()=="我戰" && mywtrun==true)
+            if(BT53.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT53.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(5,3);
+                range(5,3,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 3;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT53.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT54.setOnAction(e->{
             //ssss2
-            if(BT54.getText()=="我戰" && mywtrun==true)
+            if(BT54.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT54.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(5,4);
+                range(5,4,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 4;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT54.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT55.setOnAction(e->{
             //ssss2
-            if(BT55.getText()=="我戰" && mywtrun==true)
+            if(BT55.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT55.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(5,5);
+                range(5,5,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 5;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT55.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT56.setOnAction(e->{
             //ssss2
-            if(BT56.getText()=="我戰" && mywtrun==true)
+            if(BT56.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT56.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(5,6);
+                range(5,6,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 6;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT56.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT57.setOnAction(e->{
             //ssss2
-            if(BT57.getText()=="我戰" && mywtrun==true)
+            if(BT57.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT57.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(5,7);
+                range(5,7,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 7;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT57.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT58.setOnAction(e->{
             //ssss2
-            if(BT58.getText()=="我戰" && mywtrun==true)
+            if(BT58.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT58.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(5,8);
+                range(5,8,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 8;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT58.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT59.setOnAction(e->{
             //ssss2
-            if(BT59.getText()=="我戰" && mywtrun==true)
+            if(BT59.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT59.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(5,9);
+                range(5,9,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 9;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT59.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT510.setOnAction(e->{
             //ssss2
-            if(BT510.getText()=="我戰" && mywtrun==true)
+            if(BT510.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT510.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(5,10);
+                range(5,10,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 10;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT510.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT511.setOnAction(e->{
             //ssss2
-            if(BT511.getText()=="我戰" && mywtrun==true)
+            if(BT511.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT511.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(5,11);
+                range(5,11,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 11;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT511.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT512.setOnAction(e->{
             //ssss2
-            if(BT512.getText()=="我戰" && mywtrun==true)
+            if(BT512.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT512.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(5,12);
+                range(5,12,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 12;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT512.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT61.setOnAction(e->{
             //ssss2
-            if(BT61.getText()=="我戰" && mywtrun==true)
+            if(BT61.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT61.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(6,1);
+                range(6,1,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 1;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT61.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT62.setOnAction(e->{
             //ssss2
-            if(BT62.getText()=="我戰" && mywtrun==true)
+            if(BT62.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT62.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(6,2);
+                range(6,2,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 2;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT62.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT63.setOnAction(e->{
             //ssss2
-            if(BT63.getText()=="我戰" && mywtrun==true)
+            if(BT63.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT63.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(6,3);
+                range(6,3,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 3;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT63.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT64.setOnAction(e->{
             //ssss2
-            if(BT64.getText()=="我戰" && mywtrun==true)
+            if(BT64.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT64.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(6,4);
+                range(6,4,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 4;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT64.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT65.setOnAction(e->{
             //ssss2
-            if(BT65.getText()=="我戰" && mywtrun==true)
+            if(BT65.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT65.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(6,5);
+                range(6,5,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 5;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT65.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT66.setOnAction(e->{
             //ssss2
-            if(BT66.getText()=="我戰" && mywtrun==true)
+            if(BT66.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT66.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(6,6);
+                range(6,6,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 6;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT66.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT67.setOnAction(e->{
             //ssss2
-            if(BT67.getText()=="我戰" && mywtrun==true)
+            if(BT67.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT67.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(6,7);
+                range(6,7,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 7;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT67.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT68.setOnAction(e->{
             //ssss2
-            if(BT68.getText()=="我戰" && mywtrun==true)
+            if(BT68.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT68.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(6,8);
+                range(6,8,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 8;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT68.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT69.setOnAction(e->{
             //ssss2
-            if(BT69.getText()=="我戰" && mywtrun==true)
+            if(BT69.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT69.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(6,9);
+                range(6,9,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 9;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT69.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT610.setOnAction(e->{
             //ssss2
-            if(BT610.getText()=="我戰" && mywtrun==true)
+            if(BT610.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT610.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(6,10);
+                range(6,10,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 10;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT610.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT611.setOnAction(e->{
             //ssss2
-            if(BT611.getText()=="我戰" && mywtrun==true)
+            if(BT611.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT611.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(6,11);
+                range(6,11,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 11;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT611.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT612.setOnAction(e->{
             //ssss2
-            if(BT612.getText()=="我戰" && mywtrun==true)
+            if(BT612.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT612.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(6,12);
+                range(6,12,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 12;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT612.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT71.setOnAction(e->{
             //ssss2
-            if(BT71.getText()=="我戰" && mywtrun==true)
+            if(BT71.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT71.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(7,1);
+                range(7,1,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 1;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT71.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT72.setOnAction(e->{
             //ssss2
-            if(BT72.getText()=="我戰" && mywtrun==true)
+            if(BT72.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT72.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(7,2);
+                range(7,2,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 2;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT72.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT73.setOnAction(e->{
             //ssss2
-            if(BT73.getText()=="我戰" && mywtrun==true)
+            if(BT73.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT73.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(7,3);
+                range(7,3,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 3;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT73.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT74.setOnAction(e->{
             //ssss2
-            if(BT74.getText()=="我戰" && mywtrun==true)
+            if(BT74.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT74.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(7,4);
+                range(7,4,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 4;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT74.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT75.setOnAction(e->{
             //ssss2
-            if(BT75.getText()=="我戰" && mywtrun==true)
+            if(BT75.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT75.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(7,5);
+                range(7,5,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 5;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT75.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT76.setOnAction(e->{
             //ssss2
-            if(BT76.getText()=="我戰" && mywtrun==true)
+            if(BT76.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT76.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(7,6);
+                range(7,6,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 6;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT76.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT77.setOnAction(e->{
             //ssss2
-            if(BT77.getText()=="我戰" && mywtrun==true)
+            if(BT77.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT77.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(7,7);
+                range(7,7,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 7;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT77.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT78.setOnAction(e->{
             //ssss2
-            if(BT78.getText()=="我戰" && mywtrun==true)
+            if(BT78.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT78.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(7,8);
+                range(7,8,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 8;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT78.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT79.setOnAction(e->{
             //ssss2
-            if(BT79.getText()=="我戰" && mywtrun==true)
+            if(BT79.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT79.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(7,9);
+                range(7,9,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 9;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT79.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT710.setOnAction(e->{
             //ssss2
-            if(BT710.getText()=="我戰" && mywtrun==true)
+            if(BT710.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT710.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(7,10);
+                range(7,10,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 10;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT710.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT711.setOnAction(e->{
             //ssss2
-            if(BT711.getText()=="我戰" && mywtrun==true)
+            if(BT711.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT711.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(7,11);
+                range(7,11,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 11;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT711.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT712.setOnAction(e->{
             //ssss2
-            if(BT712.getText()=="我戰" && mywtrun==true)
+            if(BT712.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT712.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(7,12);
+                range(7,12,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 12;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT712.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT81.setOnAction(e->{
             //ssss2
-            if(BT81.getText()=="我戰" && mywtrun==true)
+            if(BT81.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT81.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(8,1);
+                range(8,1,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 1;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT81.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT82.setOnAction(e->{
             //ssss2
-            if(BT82.getText()=="我戰" && mywtrun==true)
+            if(BT82.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT82.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(8,2);
+                range(8,2,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 2;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT82.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT83.setOnAction(e->{
             //ssss2
-            if(BT83.getText()=="我戰" && mywtrun==true)
+            if(BT83.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT83.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(8,3);
+                range(8,3,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 3;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT83.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT84.setOnAction(e->{
             //ssss2
-            if(BT84.getText()=="我戰" && mywtrun==true)
+            if(BT84.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT84.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(8,4);
+                range(8,4,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 4;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT84.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT85.setOnAction(e->{
             //ssss2
-            if(BT85.getText()=="我戰" && mywtrun==true)
+            if(BT85.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT85.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(8,5);
+                range(8,5,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 5;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT85.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT86.setOnAction(e->{
             //ssss2
-            if(BT86.getText()=="我戰" && mywtrun==true)
+            if(BT86.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT86.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(8,6);
+                range(8,6,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 6;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT86.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT87.setOnAction(e->{
             //ssss2
-            if(BT87.getText()=="我戰" && mywtrun==true)
+            if(BT87.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT87.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(8,7);
+                range(8,7,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 7;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT87.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT88.setOnAction(e->{
             //ssss2
-            if(BT88.getText()=="我戰" && mywtrun==true)
+            if(BT88.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT88.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(8,8);
+                range(8,8,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 8;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT88.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT89.setOnAction(e->{
             //ssss2
-            if(BT89.getText()=="我戰" && mywtrun==true)
+            if(BT89.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT89.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(8,9);
+                range(8,9,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 9;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT89.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT810.setOnAction(e->{
             //ssss2
-            if(BT810.getText()=="我戰" && mywtrun==true)
+            if(BT810.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT810.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(8,10);
+                range(8,10,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 10;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT810.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT811.setOnAction(e->{
             //ssss2
-            if(BT811.getText()=="我戰" && mywtrun==true)
+            if(BT811.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT811.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(8,11);
+                range(8,11,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 11;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT811.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT812.setOnAction(e->{
             //ssss2
-            if(BT812.getText()=="我戰" && mywtrun==true)
+            if(BT812.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT812.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(8,12);
+                range(8,12,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 12;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT812.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT91.setOnAction(e->{
             //ssss2
-            if(BT91.getText()=="我戰" && mywtrun==true)
+            if(BT91.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT91.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(9,1);
+                range(9,1,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 1;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT91.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT92.setOnAction(e->{
             //ssss2
-            if(BT92.getText()=="我戰" && mywtrun==true)
+            if(BT92.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT92.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(9,2);
+                range(9,2,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 2;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT92.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT93.setOnAction(e->{
             //ssss2
-            if(BT93.getText()=="我戰" && mywtrun==true)
+            if(BT93.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT93.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(9,3);
+                range(9,3,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 3;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT93.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT94.setOnAction(e->{
             //ssss2
-            if(BT94.getText()=="我戰" && mywtrun==true)
+            if(BT94.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT94.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(9,4);
+                range(9,4,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 4;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT94.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT95.setOnAction(e->{
             //ssss2
-            if(BT95.getText()=="我戰" && mywtrun==true)
+            if(BT95.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT95.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(9,5);
+                range(9,5,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 5;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT95.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT96.setOnAction(e->{
             //ssss2
-            if(BT96.getText()=="我戰" && mywtrun==true)
+            if(BT96.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT96.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(9,6);
+                range(9,6,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 6;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT96.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT97.setOnAction(e->{
             //ssss2
-            if(BT97.getText()=="我戰" && mywtrun==true)
+            if(BT97.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT97.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(9,7);
+                range(9,7,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 7;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT97.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT98.setOnAction(e->{
             //ssss2
-            if(BT98.getText()=="我戰" && mywtrun==true)
+            if(BT98.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT98.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(9,8);
+                range(9,8,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 8;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT98.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT99.setOnAction(e->{
             //ssss2
-            if(BT99.getText()=="我戰" && mywtrun==true)
+            if(BT99.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT99.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(9,9);
+                range(9,9,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 9;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT99.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT910.setOnAction(e->{
             //ssss2
-            if(BT910.getText()=="我戰" && mywtrun==true)
+            if(BT910.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT910.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(9,10);
+                range(9,10,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 10;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT910.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT911.setOnAction(e->{
             //ssss2
-            if(BT911.getText()=="我戰" && mywtrun==true)
+            if(BT911.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT911.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(9,11);
+                range(9,11,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 11;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT911.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT912.setOnAction(e->{
             //ssss2
-            if(BT912.getText()=="我戰" && mywtrun==true)
+            if(BT912.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT912.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(9,12);
+                range(9,12,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 12;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT912.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT101.setOnAction(e->{
             //ssss2
-            if(BT101.getText()=="我戰" && mywtrun==true)
+            if(BT101.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT101.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(10,1);
+                range(10,1,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 1;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT101.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT102.setOnAction(e->{
             //ssss2
-            if(BT102.getText()=="我戰" && mywtrun==true)
+            if(BT102.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT102.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(10,2);
+                range(10,2,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 2;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT102.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT103.setOnAction(e->{
             //ssss2
-            if(BT103.getText()=="我戰" && mywtrun==true)
+            if(BT103.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT103.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(10,3);
+                range(10,3,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 3;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT103.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT104.setOnAction(e->{
             //ssss2
-            if(BT104.getText()=="我戰" && mywtrun==true)
+            if(BT104.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT104.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(10,4);
+                range(10,4,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 4;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT104.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT105.setOnAction(e->{
             //ssss2
-            if(BT105.getText()=="我戰" && mywtrun==true)
+            if(BT105.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT105.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(10,5);
+                range(10,5,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 5;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT105.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT106.setOnAction(e->{
             //ssss2
-            if(BT106.getText()=="我戰" && mywtrun==true)
+            if(BT106.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT106.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(10,6);
+                range(10,6,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 6;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT106.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT107.setOnAction(e->{
             //ssss2
-            if(BT107.getText()=="我戰" && mywtrun==true)
+            if(BT107.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT107.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(10,7);
+                range(10,7,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 7;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT107.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT108.setOnAction(e->{
             //ssss2
-            if(BT108.getText()=="我戰" && mywtrun==true)
+            if(BT108.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT108.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(10,8);
+                range(10,8,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 8;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT108.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT109.setOnAction(e->{
             //ssss2
-            if(BT109.getText()=="我戰" && mywtrun==true)
+            if(BT109.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT109.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(10,9);
+                range(10,9,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 9;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT109.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT1010.setOnAction(e->{
             //ssss2
-            if(BT1010.getText()=="我戰" && mywtrun==true)
+            if(BT1010.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT1010.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(10,10);
+                range(10,10,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 10;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT1010.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT1011.setOnAction(e->{
             //ssss2
-            if(BT1011.getText()=="我戰" && mywtrun==true)
+            if(BT1011.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT1011.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(10,11);
+                range(10,11,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 11;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT1011.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
         });
         BT1012.setOnAction(e->{
             //ssss2
-            if(BT1012.getText()=="我戰" && mywtrun==true)
+            if(BT1012.getText()=="敵戰")
+            {
+                atkenw();
+                connet();
+            }
+            else if(BT1012.getText()=="我戰" && mywtrun==true && mywac==false)
             {
                 mywac=true;
-                range(10,12);
+                range(10,12,2);
+
             }
             else
             {
                 if(mywac==true) {
-                    textclear(2);
+                    textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 12;
-                    textclear(1);
+                    connet();
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    textclear(mwx,mwy,1);
                     BT1012.setText("我戰");
-                    mywac=false;
+                    //mywac=false;
                     mywtrun=false;
                 }
             }
