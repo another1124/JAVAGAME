@@ -27,20 +27,23 @@ public class Controller implements Initializable {
     public Button BT91,BT92,BT93,BT94,BT95,BT96,BT97,BT98,BT99,BT910,BT911,BT912;
     public Button BT101,BT102,BT103,BT104,BT105,BT106,BT107,BT108,BT109,BT1010,BT1011,BT1012;
 
-    public  final long duration = 30000;
     public Button turnend;
     public Button testturn;
     public Button ATTACK;
     public Button WAIT;
     public Label enwhp;
     public Label mywhp;
-
+    private client client=new client();
     int mwx=6,mwy=10,ewx=6,ewy=2,dpc=1;
-    int a, b, c = 0, d;
+    int a,b,c=0,d;
+    boolean firstturn=true,test=false;
     boolean mywtrun=true,mywac=false,enwtrun=false;
     boolean WATKflag=false,ATKflag=false;
     WAR mwar=new WAR();
     WAR ewar=new WAR();
+    private String mysqlstring = "jdbc:mysql://localhost:80/GAME?user=root&password=123qwe" +
+            "&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8";
+    private Turnex turnex=new Turnex();
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
            boolean flag = false;
@@ -54,33 +57,29 @@ public class Controller implements Initializable {
                 BT512.setDisable(true);
                 BT512.setDisable(false);*/
             //    System.out.println("TEST");
-           // });
-           ini();
-           getid();
+           //
+            client.start();
+       //    ini();
+        //   getid();
+        if(mywtrun==true)
+        {
            OnAction();
            turn();
            ATK();
-    }
-    public  void connet()
-    {
-        String mysqlstring = "jdbc:mysql://localhost:80/GAME?user=root&password=123qwe" +
-                "&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8";
-        PreparedStatement statement = null;
-        try{
-            Connection connection = DriverManager.getConnection(mysqlstring);
-            String sql ="update connet set wx=?,wy=?,whp=?,enwhp=? where playerid=? ";
-            statement = connection.prepareStatement(sql);
-            statement.setInt(1,mwx);
-            statement.setInt(2,mwy);
-            statement.setInt(3,mwar.hp);
-            statement.setInt(4,ewar.hp);
-            statement.setInt(5,dpc);
-            statement.executeUpdate();
-        }catch (SQLException ee)
+        if (firstturn)
         {
-            System.out.println("ssss");
-            ee.printStackTrace();
+            if(dpc==1) {
+                mywtrun=true;
+                client.update(mywtrun);
+                enwtrun=false;
+            }
+            else {
+                mywtrun=false;
+                enwtrun=true;
+            }
         }
+        }
+
     }
     public void ATK()
     {
@@ -97,59 +96,8 @@ public class Controller implements Initializable {
             ATTACK.setDisable(true);
             WAIT.setDisable(true);
             mywac=false;
-            GAN(mwx,mwy,1);
+            GAN(mwx,mwy,1," ");
         });
-    }
-    public  void getid()
-    {
-        String mysqlstring = "jdbc:mysql://localhost:80/GAME?user=root&password=123qwe" +
-                "&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8";
-        try {
-
-            Connection connection = DriverManager.getConnection(mysqlstring);
-            String sql = "insert into connet (wx,wy,playerid,enwhp,whp) values ('"+
-                    Integer.toString(mwx) + "','" +
-                    Integer.toString(mwy) + "','" +
-                    Integer.toString(dpc) + "','" +
-                    Integer.toString(ewar.hp) + "','" +
-                    Integer.toString(mwar.hp) +
-                    "');";
-            Statement statement = connection.createStatement();
-            statement.executeUpdate(sql);
-        }catch (SQLException ee)
-        {
-                System.out.println("ss");
-                ee.printStackTrace();
-        }
-
-    }
-    public void ini()
-    {
-        String mysqlstring = "jdbc:mysql://localhost:80/GAME?user=root&password=123qwe" +
-                "&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8";
-        Connection connection = null;
-       PreparedStatement statement = null;
-        try {
-           connection = DriverManager.getConnection(mysqlstring);
-            System.out.println("Connected");
-
-            String sql = "Select wx,wy,playerid,enwhp,whp From connet ";
-
-
-            statement = connection.prepareStatement(sql);
-           // statement.setString(1,"1");
-            ResultSet resultSet = statement.executeQuery();
-
-            while (resultSet.next())
-            {
-                dpc+=Integer.parseInt(resultSet.getString("playerid"));
-                System.out.println(resultSet.getString("playerid"));
-            }
-        }catch (SQLException ex)
-        {
-            System.out.println("Cannot connect");
-            ex.printStackTrace();
-        }
     }
     public  void turn()
     {
@@ -162,11 +110,24 @@ public class Controller implements Initializable {
             WATKflag=false;
             ATTACK.setDisable(true);
             WAIT.setDisable(true);
-            connet();
-        });
+            client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+            client.update(mywtrun);
+            turnend.setDisable(true);
+            ATTACK.setDisable(true);
+            WAIT.setDisable(true);
+            System.out.println("SSSSSS");
+            textclear(1);
+           // turnex.start();
+            turnend.setDisable(true);
+
+            //turnend.setDisable(false);
+          // turndata(1,false);
+    });
+
         testturn.setOnAction(e->{
             enwtrun=false;
             mywtrun=true;
+            turnend.setDisable(false);
             textclear(0);
             textclear(mwx,mwy,1);
         });
@@ -176,11 +137,12 @@ public class Controller implements Initializable {
         if(WATKflag==true) {
             WATKflag = false;
             ewar.hp-=mwar.atk;
+            client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             enwhp.setText(Integer.toString(ewar.hp));
             textclear(mwx,mwy,1);
             ATTACK.setDisable(true);
             WAIT.setDisable(true);
-            GAN(mwx,mwy,1);
+            GAN(mwx,mwy,1," ");
         }
     }
     public void range(int x,int y,int z)
@@ -198,7 +160,7 @@ public class Controller implements Initializable {
                     else
                         c += b-mwy;
                     if (c <= z)
-                        GAN(a, b,0);
+                        GAN(a, b,0," ");
                     c = 0;
                 }
             }
@@ -210,7 +172,7 @@ public class Controller implements Initializable {
         {
             for(b=1;b<=12;b++)
             {
-                GAN(a,b,z);
+                GAN(a,b,z," ");
             }
         }
     }
@@ -221,13 +183,13 @@ public class Controller implements Initializable {
             for (a = 1; a <= 10; a++) {
                 for (b = 1; b <= 12; b++) {
                     if (a != c || b != d)
-                        GAN(a, b, z);
+                        GAN(a, b, z," ");
                 }
             }
         }
         else
         {
-            GAN(c,d,2);
+            GAN(c,d,2," ");
         }
     }
 
@@ -238,7 +200,7 @@ public class Controller implements Initializable {
             if(BT11.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT11.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -252,7 +214,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 1;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -267,7 +229,7 @@ public class Controller implements Initializable {
             if(BT12.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT12.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -281,7 +243,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 2;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -296,7 +258,7 @@ public class Controller implements Initializable {
             if(BT13.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT13.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -310,7 +272,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 3;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -325,7 +287,7 @@ public class Controller implements Initializable {
             if(BT14.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT14.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -339,7 +301,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 4;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -354,7 +316,7 @@ public class Controller implements Initializable {
             if(BT15.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT15.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -368,7 +330,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 5;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -383,7 +345,7 @@ public class Controller implements Initializable {
             if(BT16.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT16.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -397,7 +359,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 6;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -412,7 +374,7 @@ public class Controller implements Initializable {
             if(BT17.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT17.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -426,7 +388,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 7;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -441,7 +403,7 @@ public class Controller implements Initializable {
             if(BT18.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT18.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -455,7 +417,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 8;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -470,7 +432,7 @@ public class Controller implements Initializable {
             if(BT19.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT19.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -484,7 +446,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 9;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -499,7 +461,7 @@ public class Controller implements Initializable {
             if(BT110.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT110.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -513,7 +475,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 10;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -528,7 +490,7 @@ public class Controller implements Initializable {
             if(BT111.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT111.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -542,7 +504,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 11;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -557,7 +519,7 @@ public class Controller implements Initializable {
             if(BT112.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT112.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -571,7 +533,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 12;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -586,7 +548,7 @@ public class Controller implements Initializable {
             if(BT21.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT21.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -600,7 +562,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 1;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -615,7 +577,7 @@ public class Controller implements Initializable {
             if(BT22.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT22.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -629,7 +591,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 2;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -644,7 +606,7 @@ public class Controller implements Initializable {
             if(BT23.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT23.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -658,7 +620,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 3;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -673,7 +635,7 @@ public class Controller implements Initializable {
             if(BT24.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT24.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -687,7 +649,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 4;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -702,7 +664,7 @@ public class Controller implements Initializable {
             if(BT25.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT25.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -716,7 +678,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 5;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -731,7 +693,7 @@ public class Controller implements Initializable {
             if(BT26.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT26.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -745,7 +707,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 6;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -760,7 +722,7 @@ public class Controller implements Initializable {
             if(BT27.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT27.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -774,7 +736,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 7;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -789,7 +751,7 @@ public class Controller implements Initializable {
             if(BT28.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT28.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -803,7 +765,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 8;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -818,7 +780,7 @@ public class Controller implements Initializable {
             if(BT29.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT29.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -832,7 +794,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 9;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -847,7 +809,7 @@ public class Controller implements Initializable {
             if(BT210.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT210.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -861,7 +823,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 10;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -876,7 +838,7 @@ public class Controller implements Initializable {
             if(BT211.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT211.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -890,7 +852,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 11;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -905,7 +867,7 @@ public class Controller implements Initializable {
             if(BT212.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT212.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -919,7 +881,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 12;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -934,7 +896,7 @@ public class Controller implements Initializable {
             if(BT31.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT31.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -948,7 +910,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 1;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -963,7 +925,7 @@ public class Controller implements Initializable {
             if(BT32.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT32.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -977,7 +939,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 2;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -992,7 +954,7 @@ public class Controller implements Initializable {
             if(BT33.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT33.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1006,7 +968,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 3;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1021,7 +983,7 @@ public class Controller implements Initializable {
             if(BT34.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT34.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1035,7 +997,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 4;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1050,7 +1012,7 @@ public class Controller implements Initializable {
             if(BT35.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT35.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1064,7 +1026,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 5;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1079,7 +1041,7 @@ public class Controller implements Initializable {
             if(BT36.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT36.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1093,7 +1055,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 6;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1108,7 +1070,7 @@ public class Controller implements Initializable {
             if(BT37.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT37.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1122,7 +1084,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 7;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1137,7 +1099,7 @@ public class Controller implements Initializable {
             if(BT38.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT38.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1151,7 +1113,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 8;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1166,7 +1128,7 @@ public class Controller implements Initializable {
             if(BT39.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT39.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1180,7 +1142,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 9;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1195,7 +1157,7 @@ public class Controller implements Initializable {
             if(BT310.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT310.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1209,7 +1171,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 10;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1224,7 +1186,7 @@ public class Controller implements Initializable {
             if(BT311.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT311.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1238,7 +1200,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 11;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1253,7 +1215,7 @@ public class Controller implements Initializable {
             if(BT312.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT312.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1267,7 +1229,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 12;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1282,7 +1244,7 @@ public class Controller implements Initializable {
             if(BT41.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT41.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1296,7 +1258,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 1;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1311,7 +1273,7 @@ public class Controller implements Initializable {
             if(BT42.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT42.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1325,7 +1287,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 2;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1340,7 +1302,7 @@ public class Controller implements Initializable {
             if(BT43.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT43.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1354,7 +1316,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 3;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1369,7 +1331,7 @@ public class Controller implements Initializable {
             if(BT44.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT44.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1383,7 +1345,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 4;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1398,7 +1360,7 @@ public class Controller implements Initializable {
             if(BT45.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT45.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1412,7 +1374,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 5;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1427,7 +1389,7 @@ public class Controller implements Initializable {
             if(BT46.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT46.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1441,7 +1403,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 6;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1456,7 +1418,7 @@ public class Controller implements Initializable {
             if(BT47.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT47.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1470,7 +1432,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 7;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1485,7 +1447,7 @@ public class Controller implements Initializable {
             if(BT48.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT48.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1499,7 +1461,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 8;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1514,7 +1476,7 @@ public class Controller implements Initializable {
             if(BT49.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT49.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1528,7 +1490,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 9;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1543,7 +1505,7 @@ public class Controller implements Initializable {
             if(BT410.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT410.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1557,7 +1519,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 10;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1572,7 +1534,7 @@ public class Controller implements Initializable {
             if(BT411.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT411.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1586,7 +1548,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 11;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1601,7 +1563,7 @@ public class Controller implements Initializable {
             if(BT412.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT412.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1615,7 +1577,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 12;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1630,7 +1592,7 @@ public class Controller implements Initializable {
             if(BT51.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT51.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1644,7 +1606,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 1;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1659,7 +1621,7 @@ public class Controller implements Initializable {
             if(BT52.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT52.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1673,7 +1635,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 2;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1688,7 +1650,7 @@ public class Controller implements Initializable {
             if(BT53.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT53.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1702,7 +1664,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 3;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1717,7 +1679,7 @@ public class Controller implements Initializable {
             if(BT54.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT54.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1731,7 +1693,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 4;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1746,7 +1708,7 @@ public class Controller implements Initializable {
             if(BT55.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT55.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1760,7 +1722,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 5;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1775,7 +1737,7 @@ public class Controller implements Initializable {
             if(BT56.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT56.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1789,7 +1751,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 6;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1804,7 +1766,7 @@ public class Controller implements Initializable {
             if(BT57.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT57.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1818,7 +1780,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 7;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1833,7 +1795,7 @@ public class Controller implements Initializable {
             if(BT58.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT58.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1847,7 +1809,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 8;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1862,7 +1824,7 @@ public class Controller implements Initializable {
             if(BT59.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT59.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1876,7 +1838,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 9;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1891,7 +1853,7 @@ public class Controller implements Initializable {
             if(BT510.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT510.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1905,7 +1867,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 10;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1920,7 +1882,7 @@ public class Controller implements Initializable {
             if(BT511.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT511.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1934,7 +1896,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 11;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1949,7 +1911,7 @@ public class Controller implements Initializable {
             if(BT512.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT512.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1963,7 +1925,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 12;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -1978,7 +1940,7 @@ public class Controller implements Initializable {
             if(BT61.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT61.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -1992,7 +1954,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 1;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2007,7 +1969,7 @@ public class Controller implements Initializable {
             if(BT62.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT62.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2021,7 +1983,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 2;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2036,7 +1998,7 @@ public class Controller implements Initializable {
             if(BT63.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT63.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2050,7 +2012,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 3;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2065,7 +2027,7 @@ public class Controller implements Initializable {
             if(BT64.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT64.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2079,7 +2041,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 4;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2094,7 +2056,7 @@ public class Controller implements Initializable {
             if(BT65.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT65.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2108,7 +2070,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 5;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2123,7 +2085,7 @@ public class Controller implements Initializable {
             if(BT66.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT66.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2137,7 +2099,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 6;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2152,7 +2114,7 @@ public class Controller implements Initializable {
             if(BT67.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT67.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2166,7 +2128,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 7;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2181,7 +2143,7 @@ public class Controller implements Initializable {
             if(BT68.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT68.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2195,7 +2157,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 8;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2210,7 +2172,7 @@ public class Controller implements Initializable {
             if(BT69.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT69.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2224,7 +2186,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 9;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2239,7 +2201,7 @@ public class Controller implements Initializable {
             if(BT610.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT610.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2253,7 +2215,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 10;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2268,7 +2230,7 @@ public class Controller implements Initializable {
             if(BT611.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT611.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2282,7 +2244,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 11;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2297,7 +2259,7 @@ public class Controller implements Initializable {
             if(BT612.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT612.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2311,7 +2273,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 12;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2326,7 +2288,7 @@ public class Controller implements Initializable {
             if(BT71.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT71.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2340,7 +2302,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 1;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2355,7 +2317,7 @@ public class Controller implements Initializable {
             if(BT72.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT72.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2369,7 +2331,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 2;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2384,7 +2346,7 @@ public class Controller implements Initializable {
             if(BT73.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT73.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2398,7 +2360,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 3;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2413,7 +2375,7 @@ public class Controller implements Initializable {
             if(BT74.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT74.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2427,7 +2389,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 4;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2442,7 +2404,7 @@ public class Controller implements Initializable {
             if(BT75.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT75.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2456,7 +2418,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 5;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2471,7 +2433,7 @@ public class Controller implements Initializable {
             if(BT76.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT76.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2485,7 +2447,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 6;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2500,7 +2462,7 @@ public class Controller implements Initializable {
             if(BT77.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT77.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2514,7 +2476,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 7;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2529,7 +2491,7 @@ public class Controller implements Initializable {
             if(BT78.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT78.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2543,7 +2505,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 8;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2558,7 +2520,7 @@ public class Controller implements Initializable {
             if(BT79.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT79.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2572,7 +2534,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 9;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2587,7 +2549,7 @@ public class Controller implements Initializable {
             if(BT710.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT710.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2601,7 +2563,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 10;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2616,7 +2578,7 @@ public class Controller implements Initializable {
             if(BT711.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT711.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2630,7 +2592,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 11;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2645,7 +2607,7 @@ public class Controller implements Initializable {
             if(BT712.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT712.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2659,7 +2621,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 12;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2674,7 +2636,7 @@ public class Controller implements Initializable {
             if(BT81.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT81.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2688,7 +2650,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 1;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2703,7 +2665,7 @@ public class Controller implements Initializable {
             if(BT82.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT82.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2717,7 +2679,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 2;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2732,7 +2694,7 @@ public class Controller implements Initializable {
             if(BT83.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT83.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2746,7 +2708,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 3;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2761,7 +2723,7 @@ public class Controller implements Initializable {
             if(BT84.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT84.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2775,7 +2737,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 4;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2790,7 +2752,7 @@ public class Controller implements Initializable {
             if(BT85.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT85.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2804,7 +2766,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 5;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2819,7 +2781,7 @@ public class Controller implements Initializable {
             if(BT86.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT86.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2833,7 +2795,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 6;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2848,7 +2810,7 @@ public class Controller implements Initializable {
             if(BT87.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT87.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2862,7 +2824,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 7;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2877,7 +2839,7 @@ public class Controller implements Initializable {
             if(BT88.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT88.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2891,7 +2853,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 8;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2906,7 +2868,7 @@ public class Controller implements Initializable {
             if(BT89.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT89.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2920,7 +2882,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 9;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2935,7 +2897,7 @@ public class Controller implements Initializable {
             if(BT810.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT810.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2949,7 +2911,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 10;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2964,7 +2926,7 @@ public class Controller implements Initializable {
             if(BT811.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT811.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -2978,7 +2940,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 11;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -2993,7 +2955,7 @@ public class Controller implements Initializable {
             if(BT812.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT812.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -3007,7 +2969,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 12;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -3022,7 +2984,7 @@ public class Controller implements Initializable {
             if(BT91.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT91.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -3036,7 +2998,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 1;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -3051,7 +3013,7 @@ public class Controller implements Initializable {
             if(BT92.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT92.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -3065,7 +3027,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 2;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -3080,7 +3042,7 @@ public class Controller implements Initializable {
             if(BT93.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT93.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -3094,7 +3056,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 3;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -3109,7 +3071,7 @@ public class Controller implements Initializable {
             if(BT94.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT94.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -3123,7 +3085,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 4;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -3138,7 +3100,7 @@ public class Controller implements Initializable {
             if(BT95.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT95.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -3152,7 +3114,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 5;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -3167,7 +3129,7 @@ public class Controller implements Initializable {
             if(BT96.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT96.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -3181,7 +3143,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 6;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -3196,7 +3158,7 @@ public class Controller implements Initializable {
             if(BT97.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT97.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -3210,7 +3172,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 7;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -3225,7 +3187,7 @@ public class Controller implements Initializable {
             if(BT98.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT98.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -3239,7 +3201,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 8;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -3254,7 +3216,7 @@ public class Controller implements Initializable {
             if(BT99.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT99.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -3268,7 +3230,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 9;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -3283,7 +3245,7 @@ public class Controller implements Initializable {
             if(BT910.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT910.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -3297,7 +3259,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 10;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -3312,7 +3274,7 @@ public class Controller implements Initializable {
             if(BT911.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT911.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -3326,7 +3288,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 11;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -3341,7 +3303,7 @@ public class Controller implements Initializable {
             if(BT912.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT912.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -3355,7 +3317,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 12;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -3370,7 +3332,7 @@ public class Controller implements Initializable {
             if(BT101.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT101.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -3384,7 +3346,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 1;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -3399,7 +3361,7 @@ public class Controller implements Initializable {
             if(BT102.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT102.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -3413,7 +3375,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 2;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -3428,7 +3390,7 @@ public class Controller implements Initializable {
             if(BT103.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT103.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -3442,7 +3404,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 3;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -3457,7 +3419,7 @@ public class Controller implements Initializable {
             if(BT104.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT104.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -3471,7 +3433,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 4;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -3486,7 +3448,7 @@ public class Controller implements Initializable {
             if(BT105.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT105.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -3500,7 +3462,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 5;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -3515,7 +3477,7 @@ public class Controller implements Initializable {
             if(BT106.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT106.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -3529,7 +3491,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 6;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -3544,7 +3506,7 @@ public class Controller implements Initializable {
             if(BT107.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT107.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -3558,7 +3520,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 7;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -3573,7 +3535,7 @@ public class Controller implements Initializable {
             if(BT108.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT108.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -3587,7 +3549,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 8;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -3602,7 +3564,7 @@ public class Controller implements Initializable {
             if(BT109.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT109.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -3616,7 +3578,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 9;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -3631,7 +3593,7 @@ public class Controller implements Initializable {
             if(BT1010.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT1010.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -3645,7 +3607,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 10;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -3660,7 +3622,7 @@ public class Controller implements Initializable {
             if(BT1011.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT1011.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -3674,7 +3636,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 11;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -3689,7 +3651,7 @@ public class Controller implements Initializable {
             if(BT1012.getText()=="敵戰")
             {
                 atkenw();
-                connet();
+                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
             else if(BT1012.getText()=="我戰" && mywtrun==true && mywac==false)
             {
@@ -3703,7 +3665,7 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 12;
-                    connet();
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
@@ -3714,7 +3676,7 @@ public class Controller implements Initializable {
             }
         });
     }
-    public void GAN(int x,int y,int z)
+    public void GAN(int x,int y,int z,String a)
     {
         switch (x)
         {
@@ -3724,7 +3686,7 @@ public class Controller implements Initializable {
 
                       //selectflag1
                         if(z==2)
-                            BT11.setText(" ");
+                            BT11.setText(a);
                         else if(z==1)
                             BT11.setDisable(true);
                         else if(z==0)
@@ -3734,7 +3696,7 @@ public class Controller implements Initializable {
 
                       //selectflag1
                         if(z==2)
-                            BT12.setText(" ");
+                            BT12.setText(a);
                         else if(z==1)
                             BT12.setDisable(true);
                         else if(z==0)
@@ -3744,7 +3706,7 @@ public class Controller implements Initializable {
 
                       //selectflag1
                         if(z==2)
-                            BT13.setText(" ");
+                            BT13.setText(a);
                         else if(z==1)
                             BT13.setDisable(true);
                         else if(z==0)
@@ -3754,7 +3716,7 @@ public class Controller implements Initializable {
 
                       //selectflag1
                         if(z==2)
-                            BT14.setText(" ");
+                            BT14.setText(a);
                         else if(z==1)
                             BT14.setDisable(true);
                         else if(z==0)
@@ -3764,7 +3726,7 @@ public class Controller implements Initializable {
 
                       //selectflag1
                         if(z==2)
-                            BT15.setText(" ");
+                            BT15.setText(a);
                         else if(z==1)
                             BT15.setDisable(true);
                         else if(z==0)
@@ -3774,7 +3736,7 @@ public class Controller implements Initializable {
 
                       //selectflag1
                         if(z==2)
-                            BT16.setText(" ");
+                            BT16.setText(a);
                         else if(z==1)
                             BT16.setDisable(true);
                         else if(z==0)
@@ -3784,7 +3746,7 @@ public class Controller implements Initializable {
 
                       //selectflag1
                         if(z==2)
-                            BT17.setText(" ");
+                            BT17.setText(a);
                         else if(z==1)
                             BT17.setDisable(true);
                         else if(z==0)
@@ -3794,7 +3756,7 @@ public class Controller implements Initializable {
 
                       //selectflag1
                         if(z==2)
-                            BT18.setText(" ");
+                            BT18.setText(a);
                         else if(z==1)
                             BT18.setDisable(true);
                         else if(z==0)
@@ -3804,7 +3766,7 @@ public class Controller implements Initializable {
 
                       //selectflag1
                         if(z==2)
-                            BT19.setText(" ");
+                            BT19.setText(a);
                         else if(z==1)
                             BT19.setDisable(true);
                         else if(z==0)
@@ -3813,7 +3775,7 @@ public class Controller implements Initializable {
                     case 10:
                         //selectflag1
                         if(z==2)
-                            BT110.setText(" ");
+                            BT110.setText(a);
                         else if(z==1)
                             BT110.setDisable(true);
                         else if(z==0)
@@ -3823,7 +3785,7 @@ public class Controller implements Initializable {
                     case 11:
                         //selectflag1
                         if(z==2)
-                            BT111.setText(" ");
+                            BT111.setText(a);
                         else if(z==1)
                             BT111.setDisable(true);
                         else if(z==0)
@@ -3833,7 +3795,7 @@ public class Controller implements Initializable {
                     case 12:
                         //selectflag1
                         if(z==2)
-                            BT112.setText(" ");
+                            BT112.setText(a);
                         else if(z==1)
                             BT112.setDisable(true);
                         else if(z==0)
@@ -3848,7 +3810,7 @@ public class Controller implements Initializable {
 
                       //selectflag2
                         if(z==2)
-                            BT21.setText(" ");
+                            BT21.setText(a);
                         else if(z==1)
                             BT21.setDisable(true);
                         else if(z==0)
@@ -3858,7 +3820,7 @@ public class Controller implements Initializable {
 
                       //selectflag2
                         if(z==2)
-                            BT22.setText(" ");
+                            BT22.setText(a);
                         else if(z==1)
                             BT22.setDisable(true);
                         else if(z==0)
@@ -3868,7 +3830,7 @@ public class Controller implements Initializable {
 
                       //selectflag2
                         if(z==2)
-                            BT23.setText(" ");
+                            BT23.setText(a);
                         else if(z==1)
                             BT23.setDisable(true);
                         else if(z==0)
@@ -3878,7 +3840,7 @@ public class Controller implements Initializable {
 
                       //selectflag2
                         if(z==2)
-                            BT24.setText(" ");
+                            BT24.setText(a);
                         else if(z==1)
                             BT24.setDisable(true);
                         else if(z==0)
@@ -3888,7 +3850,7 @@ public class Controller implements Initializable {
 
                       //selectflag2
                         if(z==2)
-                            BT25.setText(" ");
+                            BT25.setText(a);
                         else if(z==1)
                             BT25.setDisable(true);
                         else if(z==0)
@@ -3898,7 +3860,7 @@ public class Controller implements Initializable {
 
                       //selectflag2
                         if(z==2)
-                            BT26.setText(" ");
+                            BT26.setText(a);
                         else if(z==1)
                             BT26.setDisable(true);
                         else if(z==0)
@@ -3908,7 +3870,7 @@ public class Controller implements Initializable {
 
                       //selectflag2
                         if(z==2)
-                            BT27.setText(" ");
+                            BT27.setText(a);
                         else if(z==1)
                             BT27.setDisable(true);
                         else if(z==0)
@@ -3918,7 +3880,7 @@ public class Controller implements Initializable {
 
                       //selectflag2
                         if(z==2)
-                            BT28.setText(" ");
+                            BT28.setText(a);
                         else if(z==1)
                             BT28.setDisable(true);
                         else if(z==0)
@@ -3928,7 +3890,7 @@ public class Controller implements Initializable {
 
                       //selectflag2
                         if(z==2)
-                            BT29.setText(" ");
+                            BT29.setText(a);
                         else if(z==1)
                             BT29.setDisable(true);
                         else if(z==0)
@@ -3937,7 +3899,7 @@ public class Controller implements Initializable {
                     case 10:
                         //selectflag2
                         if(z==2)
-                            BT210.setText(" ");
+                            BT210.setText(a);
                         else if(z==1)
                             BT210.setDisable(true);
                         else if(z==0)
@@ -3947,7 +3909,7 @@ public class Controller implements Initializable {
                     case 11:
                         //selectflag2
                         if(z==2)
-                            BT211.setText(" ");
+                            BT211.setText(a);
                         else if(z==1)
                             BT211.setDisable(true);
                         else if(z==0)
@@ -3957,7 +3919,7 @@ public class Controller implements Initializable {
                     case 12:
                         //selectflag2
                         if(z==2)
-                            BT212.setText(" ");
+                            BT212.setText(a);
                         else if(z==1)
                             BT212.setDisable(true);
                         else if(z==0)
@@ -3972,7 +3934,7 @@ public class Controller implements Initializable {
 
                       //selectflag3
                         if(z==2)
-                            BT31.setText(" ");
+                            BT31.setText(a);
                         else if(z==1)
                             BT31.setDisable(true);
                         else if(z==0)
@@ -3982,7 +3944,7 @@ public class Controller implements Initializable {
 
                       //selectflag3
                         if(z==2)
-                            BT32.setText(" ");
+                            BT32.setText(a);
                         else if(z==1)
                             BT32.setDisable(true);
                         else if(z==0)
@@ -3992,7 +3954,7 @@ public class Controller implements Initializable {
 
                       //selectflag3
                         if(z==2)
-                            BT33.setText(" ");
+                            BT33.setText(a);
                         else if(z==1)
                             BT33.setDisable(true);
                         else if(z==0)
@@ -4002,7 +3964,7 @@ public class Controller implements Initializable {
 
                       //selectflag3
                         if(z==2)
-                            BT34.setText(" ");
+                            BT34.setText(a);
                         else if(z==1)
                             BT34.setDisable(true);
                         else if(z==0)
@@ -4012,7 +3974,7 @@ public class Controller implements Initializable {
 
                       //selectflag3
                         if(z==2)
-                            BT35.setText(" ");
+                            BT35.setText(a);
                         else if(z==1)
                             BT35.setDisable(true);
                         else if(z==0)
@@ -4022,7 +3984,7 @@ public class Controller implements Initializable {
 
                       //selectflag3
                         if(z==2)
-                            BT36.setText(" ");
+                            BT36.setText(a);
                         else if(z==1)
                             BT36.setDisable(true);
                         else if(z==0)
@@ -4032,7 +3994,7 @@ public class Controller implements Initializable {
 
                       //selectflag3
                         if(z==2)
-                            BT37.setText(" ");
+                            BT37.setText(a);
                         else if(z==1)
                             BT37.setDisable(true);
                         else if(z==0)
@@ -4042,7 +4004,7 @@ public class Controller implements Initializable {
 
                       //selectflag3
                         if(z==2)
-                            BT38.setText(" ");
+                            BT38.setText(a);
                         else if(z==1)
                             BT38.setDisable(true);
                         else if(z==0)
@@ -4052,7 +4014,7 @@ public class Controller implements Initializable {
 
                       //selectflag3
                         if(z==2)
-                            BT39.setText(" ");
+                            BT39.setText(a);
                         else if(z==1)
                             BT39.setDisable(true);
                         else if(z==0)
@@ -4061,7 +4023,7 @@ public class Controller implements Initializable {
                     case 10:
                         //selectflag3
                         if(z==2)
-                            BT310.setText(" ");
+                            BT310.setText(a);
                         else if(z==1)
                             BT310.setDisable(true);
                         else if(z==0)
@@ -4071,7 +4033,7 @@ public class Controller implements Initializable {
                     case 11:
                         //selectflag3
                         if(z==2)
-                            BT311.setText(" ");
+                            BT311.setText(a);
                         else if(z==1)
                             BT311.setDisable(true);
                         else if(z==0)
@@ -4081,7 +4043,7 @@ public class Controller implements Initializable {
                     case 12:
                         //selectflag3
                         if(z==2)
-                            BT312.setText(" ");
+                            BT312.setText(a);
                         else if(z==1)
                             BT312.setDisable(true);
                         else if(z==0)
@@ -4096,7 +4058,7 @@ public class Controller implements Initializable {
 
                       //selectflag4
                         if(z==2)
-                            BT41.setText(" ");
+                            BT41.setText(a);
                         else if(z==1)
                             BT41.setDisable(true);
                         else if(z==0)
@@ -4106,7 +4068,7 @@ public class Controller implements Initializable {
 
                       //selectflag4
                         if(z==2)
-                            BT42.setText(" ");
+                            BT42.setText(a);
                         else if(z==1)
                             BT42.setDisable(true);
                         else if(z==0)
@@ -4116,7 +4078,7 @@ public class Controller implements Initializable {
 
                       //selectflag4
                         if(z==2)
-                            BT43.setText(" ");
+                            BT43.setText(a);
                         else if(z==1)
                             BT43.setDisable(true);
                         else if(z==0)
@@ -4126,7 +4088,7 @@ public class Controller implements Initializable {
 
                       //selectflag4
                         if(z==2)
-                            BT44.setText(" ");
+                            BT44.setText(a);
                         else if(z==1)
                             BT44.setDisable(true);
                         else if(z==0)
@@ -4136,7 +4098,7 @@ public class Controller implements Initializable {
 
                       //selectflag4
                         if(z==2)
-                            BT45.setText(" ");
+                            BT45.setText(a);
                         else if(z==1)
                             BT45.setDisable(true);
                         else if(z==0)
@@ -4146,7 +4108,7 @@ public class Controller implements Initializable {
 
                       //selectflag4
                         if(z==2)
-                            BT46.setText(" ");
+                            BT46.setText(a);
                         else if(z==1)
                             BT46.setDisable(true);
                         else if(z==0)
@@ -4156,7 +4118,7 @@ public class Controller implements Initializable {
 
                       //selectflag4
                         if(z==2)
-                            BT47.setText(" ");
+                            BT47.setText(a);
                         else if(z==1)
                             BT47.setDisable(true);
                         else if(z==0)
@@ -4166,7 +4128,7 @@ public class Controller implements Initializable {
 
                       //selectflag4
                         if(z==2)
-                            BT48.setText(" ");
+                            BT48.setText(a);
                         else if(z==1)
                             BT48.setDisable(true);
                         else if(z==0)
@@ -4176,7 +4138,7 @@ public class Controller implements Initializable {
 
                       //selectflag4
                         if(z==2)
-                            BT49.setText(" ");
+                            BT49.setText(a);
                         else if(z==1)
                             BT49.setDisable(true);
                         else if(z==0)
@@ -4185,7 +4147,7 @@ public class Controller implements Initializable {
                     case 10:
                         //selectflag4
                         if(z==2)
-                            BT410.setText(" ");
+                            BT410.setText(a);
                         else if(z==1)
                             BT410.setDisable(true);
                         else if(z==0)
@@ -4195,7 +4157,7 @@ public class Controller implements Initializable {
                     case 11:
                         //selectflag4
                         if(z==2)
-                            BT411.setText(" ");
+                            BT411.setText(a);
                         else if(z==1)
                             BT411.setDisable(true);
                         else if(z==0)
@@ -4205,7 +4167,7 @@ public class Controller implements Initializable {
                     case 12:
                         //selectflag4
                         if(z==2)
-                            BT412.setText(" ");
+                            BT412.setText(a);
                         else if(z==1)
                             BT412.setDisable(true);
                         else if(z==0)
@@ -4220,7 +4182,7 @@ public class Controller implements Initializable {
 
                       //selectflag5
                         if(z==2)
-                            BT51.setText(" ");
+                            BT51.setText(a);
                         else if(z==1)
                             BT51.setDisable(true);
                         else if(z==0)
@@ -4230,7 +4192,7 @@ public class Controller implements Initializable {
 
                       //selectflag5
                         if(z==2)
-                            BT52.setText(" ");
+                            BT52.setText(a);
                         else if(z==1)
                             BT52.setDisable(true);
                         else if(z==0)
@@ -4240,7 +4202,7 @@ public class Controller implements Initializable {
 
                       //selectflag5
                         if(z==2)
-                            BT53.setText(" ");
+                            BT53.setText(a);
                         else if(z==1)
                             BT53.setDisable(true);
                         else if(z==0)
@@ -4250,7 +4212,7 @@ public class Controller implements Initializable {
 
                       //selectflag5
                         if(z==2)
-                            BT54.setText(" ");
+                            BT54.setText(a);
                         else if(z==1)
                             BT54.setDisable(true);
                         else if(z==0)
@@ -4260,7 +4222,7 @@ public class Controller implements Initializable {
 
                       //selectflag5
                         if(z==2)
-                            BT55.setText(" ");
+                            BT55.setText(a);
                         else if(z==1)
                             BT55.setDisable(true);
                         else if(z==0)
@@ -4270,7 +4232,7 @@ public class Controller implements Initializable {
 
                       //selectflag5
                         if(z==2)
-                            BT56.setText(" ");
+                            BT56.setText(a);
                         else if(z==1)
                             BT56.setDisable(true);
                         else if(z==0)
@@ -4280,7 +4242,7 @@ public class Controller implements Initializable {
 
                       //selectflag5
                         if(z==2)
-                            BT57.setText(" ");
+                            BT57.setText(a);
                         else if(z==1)
                             BT57.setDisable(true);
                         else if(z==0)
@@ -4290,7 +4252,7 @@ public class Controller implements Initializable {
 
                       //selectflag5
                         if(z==2)
-                            BT58.setText(" ");
+                            BT58.setText(a);
                         else if(z==1)
                             BT58.setDisable(true);
                         else if(z==0)
@@ -4300,7 +4262,7 @@ public class Controller implements Initializable {
 
                       //selectflag5
                         if(z==2)
-                            BT59.setText(" ");
+                            BT59.setText(a);
                         else if(z==1)
                             BT59.setDisable(true);
                         else if(z==0)
@@ -4309,7 +4271,7 @@ public class Controller implements Initializable {
                     case 10:
                         //selectflag5
                         if(z==2)
-                            BT510.setText(" ");
+                            BT510.setText(a);
                         else if(z==1)
                             BT510.setDisable(true);
                         else if(z==0)
@@ -4319,7 +4281,7 @@ public class Controller implements Initializable {
                     case 11:
                         //selectflag5
                         if(z==2)
-                            BT511.setText(" ");
+                            BT511.setText(a);
                         else if(z==1)
                             BT511.setDisable(true);
                         else if(z==0)
@@ -4329,7 +4291,7 @@ public class Controller implements Initializable {
                     case 12:
                         //selectflag5
                         if(z==2)
-                            BT512.setText(" ");
+                            BT512.setText(a);
                         else if(z==1)
                             BT512.setDisable(true);
                         else if(z==0)
@@ -4344,7 +4306,7 @@ public class Controller implements Initializable {
 
                       //selectflag6
                         if(z==2)
-                            BT61.setText(" ");
+                            BT61.setText(a);
                         else if(z==1)
                             BT61.setDisable(true);
                         else if(z==0)
@@ -4354,7 +4316,7 @@ public class Controller implements Initializable {
 
                       //selectflag6
                         if(z==2)
-                            BT62.setText(" ");
+                            BT62.setText(a);
                         else if(z==1)
                             BT62.setDisable(true);
                         else if(z==0)
@@ -4364,7 +4326,7 @@ public class Controller implements Initializable {
 
                       //selectflag6
                         if(z==2)
-                            BT63.setText(" ");
+                            BT63.setText(a);
                         else if(z==1)
                             BT63.setDisable(true);
                         else if(z==0)
@@ -4374,7 +4336,7 @@ public class Controller implements Initializable {
 
                       //selectflag6
                         if(z==2)
-                            BT64.setText(" ");
+                            BT64.setText(a);
                         else if(z==1)
                             BT64.setDisable(true);
                         else if(z==0)
@@ -4384,7 +4346,7 @@ public class Controller implements Initializable {
 
                       //selectflag6
                         if(z==2)
-                            BT65.setText(" ");
+                            BT65.setText(a);
                         else if(z==1)
                             BT65.setDisable(true);
                         else if(z==0)
@@ -4394,7 +4356,7 @@ public class Controller implements Initializable {
 
                       //selectflag6
                         if(z==2)
-                            BT66.setText(" ");
+                            BT66.setText(a);
                         else if(z==1)
                             BT66.setDisable(true);
                         else if(z==0)
@@ -4404,7 +4366,7 @@ public class Controller implements Initializable {
 
                       //selectflag6
                         if(z==2)
-                            BT67.setText(" ");
+                            BT67.setText(a);
                         else if(z==1)
                             BT67.setDisable(true);
                         else if(z==0)
@@ -4414,7 +4376,7 @@ public class Controller implements Initializable {
 
                       //selectflag6
                         if(z==2)
-                            BT68.setText(" ");
+                            BT68.setText(a);
                         else if(z==1)
                             BT68.setDisable(true);
                         else if(z==0)
@@ -4424,7 +4386,7 @@ public class Controller implements Initializable {
 
                       //selectflag6
                         if(z==2)
-                            BT69.setText(" ");
+                            BT69.setText(a);
                         else if(z==1)
                             BT69.setDisable(true);
                         else if(z==0)
@@ -4433,7 +4395,7 @@ public class Controller implements Initializable {
                     case 10:
                         //selectflag6
                         if(z==2)
-                            BT610.setText(" ");
+                            BT610.setText(a);
                         else if(z==1)
                             BT610.setDisable(true);
                         else if(z==0)
@@ -4443,7 +4405,7 @@ public class Controller implements Initializable {
                     case 11:
                         //selectflag6
                         if(z==2)
-                            BT611.setText(" ");
+                            BT611.setText(a);
                         else if(z==1)
                             BT611.setDisable(true);
                         else if(z==0)
@@ -4453,7 +4415,7 @@ public class Controller implements Initializable {
                     case 12:
                         //selectflag6
                         if(z==2)
-                            BT612.setText(" ");
+                            BT612.setText(a);
                         else if(z==1)
                             BT612.setDisable(true);
                         else if(z==0)
@@ -4468,7 +4430,7 @@ public class Controller implements Initializable {
 
                       //selectflag7
                         if(z==2)
-                            BT71.setText(" ");
+                            BT71.setText(a);
                         else if(z==1)
                             BT71.setDisable(true);
                         else if(z==0)
@@ -4478,7 +4440,7 @@ public class Controller implements Initializable {
 
                       //selectflag7
                         if(z==2)
-                            BT72.setText(" ");
+                            BT72.setText(a);
                         else if(z==1)
                             BT72.setDisable(true);
                         else if(z==0)
@@ -4488,7 +4450,7 @@ public class Controller implements Initializable {
 
                       //selectflag7
                         if(z==2)
-                            BT73.setText(" ");
+                            BT73.setText(a);
                         else if(z==1)
                             BT73.setDisable(true);
                         else if(z==0)
@@ -4498,7 +4460,7 @@ public class Controller implements Initializable {
 
                       //selectflag7
                         if(z==2)
-                            BT74.setText(" ");
+                            BT74.setText(a);
                         else if(z==1)
                             BT74.setDisable(true);
                         else if(z==0)
@@ -4508,7 +4470,7 @@ public class Controller implements Initializable {
 
                       //selectflag7
                         if(z==2)
-                            BT75.setText(" ");
+                            BT75.setText(a);
                         else if(z==1)
                             BT75.setDisable(true);
                         else if(z==0)
@@ -4518,7 +4480,7 @@ public class Controller implements Initializable {
 
                       //selectflag7
                         if(z==2)
-                            BT76.setText(" ");
+                            BT76.setText(a);
                         else if(z==1)
                             BT76.setDisable(true);
                         else if(z==0)
@@ -4528,7 +4490,7 @@ public class Controller implements Initializable {
 
                       //selectflag7
                         if(z==2)
-                            BT77.setText(" ");
+                            BT77.setText(a);
                         else if(z==1)
                             BT77.setDisable(true);
                         else if(z==0)
@@ -4538,7 +4500,7 @@ public class Controller implements Initializable {
 
                       //selectflag7
                         if(z==2)
-                            BT78.setText(" ");
+                            BT78.setText(a);
                         else if(z==1)
                             BT78.setDisable(true);
                         else if(z==0)
@@ -4548,7 +4510,7 @@ public class Controller implements Initializable {
 
                       //selectflag7
                         if(z==2)
-                            BT79.setText(" ");
+                            BT79.setText(a);
                         else if(z==1)
                             BT79.setDisable(true);
                         else if(z==0)
@@ -4557,7 +4519,7 @@ public class Controller implements Initializable {
                     case 10:
                         //selectflag7
                         if(z==2)
-                            BT710.setText(" ");
+                            BT710.setText(a);
                         else if(z==1)
                             BT710.setDisable(true);
                         else if(z==0)
@@ -4567,7 +4529,7 @@ public class Controller implements Initializable {
                     case 11:
                         //selectflag7
                         if(z==2)
-                            BT711.setText(" ");
+                            BT711.setText(a);
                         else if(z==1)
                             BT711.setDisable(true);
                         else if(z==0)
@@ -4577,7 +4539,7 @@ public class Controller implements Initializable {
                     case 12:
                         //selectflag7
                         if(z==2)
-                            BT712.setText(" ");
+                            BT712.setText(a);
                         else if(z==1)
                             BT712.setDisable(true);
                         else if(z==0)
@@ -4592,7 +4554,7 @@ public class Controller implements Initializable {
 
                       //selectflag8
                         if(z==2)
-                            BT81.setText(" ");
+                            BT81.setText(a);
                         else if(z==1)
                             BT81.setDisable(true);
                         else if(z==0)
@@ -4602,7 +4564,7 @@ public class Controller implements Initializable {
 
                       //selectflag8
                         if(z==2)
-                            BT82.setText(" ");
+                            BT82.setText(a);
                         else if(z==1)
                             BT82.setDisable(true);
                         else if(z==0)
@@ -4612,7 +4574,7 @@ public class Controller implements Initializable {
 
                       //selectflag8
                         if(z==2)
-                            BT83.setText(" ");
+                            BT83.setText(a);
                         else if(z==1)
                             BT83.setDisable(true);
                         else if(z==0)
@@ -4622,7 +4584,7 @@ public class Controller implements Initializable {
 
                       //selectflag8
                         if(z==2)
-                            BT84.setText(" ");
+                            BT84.setText(a);
                         else if(z==1)
                             BT84.setDisable(true);
                         else if(z==0)
@@ -4632,7 +4594,7 @@ public class Controller implements Initializable {
 
                       //selectflag8
                         if(z==2)
-                            BT85.setText(" ");
+                            BT85.setText(a);
                         else if(z==1)
                             BT85.setDisable(true);
                         else if(z==0)
@@ -4642,7 +4604,7 @@ public class Controller implements Initializable {
 
                       //selectflag8
                         if(z==2)
-                            BT86.setText(" ");
+                            BT86.setText(a);
                         else if(z==1)
                             BT86.setDisable(true);
                         else if(z==0)
@@ -4652,7 +4614,7 @@ public class Controller implements Initializable {
 
                       //selectflag8
                         if(z==2)
-                            BT87.setText(" ");
+                            BT87.setText(a);
                         else if(z==1)
                             BT87.setDisable(true);
                         else if(z==0)
@@ -4662,7 +4624,7 @@ public class Controller implements Initializable {
 
                       //selectflag8
                         if(z==2)
-                            BT88.setText(" ");
+                            BT88.setText(a);
                         else if(z==1)
                             BT88.setDisable(true);
                         else if(z==0)
@@ -4672,7 +4634,7 @@ public class Controller implements Initializable {
 
                       //selectflag8
                         if(z==2)
-                            BT89.setText(" ");
+                            BT89.setText(a);
                         else if(z==1)
                             BT89.setDisable(true);
                         else if(z==0)
@@ -4681,7 +4643,7 @@ public class Controller implements Initializable {
                     case 10:
                         //selectflag8
                         if(z==2)
-                            BT810.setText(" ");
+                            BT810.setText(a);
                         else if(z==1)
                             BT810.setDisable(true);
                         else if(z==0)
@@ -4691,7 +4653,7 @@ public class Controller implements Initializable {
                     case 11:
                         //selectflag8
                         if(z==2)
-                            BT811.setText(" ");
+                            BT811.setText(a);
                         else if(z==1)
                             BT811.setDisable(true);
                         else if(z==0)
@@ -4701,7 +4663,7 @@ public class Controller implements Initializable {
                     case 12:
                         //selectflag88
                        if(z==2)
-                           BT812.setText(" ");
+                           BT812.setText(a);
                         else  if(z==1)
                             BT812.setDisable(true);
                         else if(z==0)
@@ -4716,7 +4678,7 @@ public class Controller implements Initializable {
 
                       //selectflag9
                         if(z==2)
-                            BT91.setText(" ");
+                            BT91.setText(a);
                         else if(z==1)
                             BT91.setDisable(true);
                         else if(z==0)
@@ -4726,7 +4688,7 @@ public class Controller implements Initializable {
 
                       //selectflag9
                         if(z==2)
-                            BT92.setText(" ");
+                            BT92.setText(a);
                         else if(z==1)
                             BT92.setDisable(true);
                         else if(z==0)
@@ -4736,7 +4698,7 @@ public class Controller implements Initializable {
 
                       //selectflag9
                         if(z==2)
-                            BT93.setText(" ");
+                            BT93.setText(a);
                         else if(z==1)
                             BT93.setDisable(true);
                         else if(z==0)
@@ -4746,7 +4708,7 @@ public class Controller implements Initializable {
 
                       //selectflag9
                         if(z==2)
-                            BT94.setText(" ");
+                            BT94.setText(a);
                         else if(z==1)
                             BT94.setDisable(true);
                         else if(z==0)
@@ -4756,7 +4718,7 @@ public class Controller implements Initializable {
 
                       //selectflag9
                         if(z==2)
-                            BT95.setText(" ");
+                            BT95.setText(a);
                         else if(z==1)
                             BT95.setDisable(true);
                         else if(z==0)
@@ -4766,7 +4728,7 @@ public class Controller implements Initializable {
 
                       //selectflag9
                         if(z==2)
-                            BT96.setText(" ");
+                            BT96.setText(a);
                         else if(z==1)
                             BT96.setDisable(true);
                         else if(z==0)
@@ -4776,7 +4738,7 @@ public class Controller implements Initializable {
 
                       //selectflag9
                         if(z==2)
-                            BT97.setText(" ");
+                            BT97.setText(a);
                         else if(z==1)
                             BT97.setDisable(true);
                         else if(z==0)
@@ -4786,7 +4748,7 @@ public class Controller implements Initializable {
 
                       //selectflag9
                         if(z==2)
-                            BT98.setText(" ");
+                            BT98.setText(a);
                         else if(z==1)
                             BT98.setDisable(true);
                         else if(z==0)
@@ -4796,7 +4758,7 @@ public class Controller implements Initializable {
 
                       //selectflag9
                         if(z==2)
-                            BT99.setText(" ");
+                            BT99.setText(a);
                         else if(z==1)
                             BT99.setDisable(true);
                         else if(z==0)
@@ -4805,7 +4767,7 @@ public class Controller implements Initializable {
                     case 10:
                         //selectflag9
                         if(z==2)
-                            BT910.setText(" ");
+                            BT910.setText(a);
                         else if(z==1)
                             BT910.setDisable(true);
                         else if(z==0)
@@ -4815,7 +4777,7 @@ public class Controller implements Initializable {
                     case 11:
                         //selectflag9
                         if(z==2)
-                            BT911.setText(" ");
+                            BT911.setText(a);
                         else if(z==1)
                             BT911.setDisable(true);
                         else if(z==0)
@@ -4825,7 +4787,7 @@ public class Controller implements Initializable {
                     case 12:
                         //selectflag9
                         if(z==2)
-                            BT912.setText(" ");
+                            BT912.setText(a);
                         else if(z==1)
                             BT912.setDisable(true);
                         else if(z==0)
@@ -4840,7 +4802,7 @@ public class Controller implements Initializable {
 
                       //selectflag0
                         if(z==2)
-                            BT101.setText(" ");
+                            BT101.setText(a);
                         else if(z==1)
                             BT101.setDisable(true);
                         else if(z==0)
@@ -4850,7 +4812,7 @@ public class Controller implements Initializable {
 
                       //selectflag0
                         if(z==2)
-                            BT102.setText(" ");
+                            BT102.setText(a);
                         else if(z==1)
                             BT102.setDisable(true);
                         else if(z==0)
@@ -4860,7 +4822,7 @@ public class Controller implements Initializable {
 
                       //selectflag0
                         if(z==2)
-                            BT103.setText(" ");
+                            BT103.setText(a);
                         else if(z==1)
                             BT103.setDisable(true);
                         else if(z==0)
@@ -4870,7 +4832,7 @@ public class Controller implements Initializable {
 
                       //selectflag0
                         if(z==2)
-                            BT104.setText(" ");
+                            BT104.setText(a);
                         else if(z==1)
                             BT104.setDisable(true);
                         else if(z==0)
@@ -4880,7 +4842,7 @@ public class Controller implements Initializable {
 
                       //selectflag0
                         if(z==2)
-                            BT105.setText(" ");
+                            BT105.setText(a);
                         else if(z==1)
                             BT105.setDisable(true);
                         else if(z==0)
@@ -4890,7 +4852,7 @@ public class Controller implements Initializable {
 
                       //selectflag0
                         if(z==2)
-                            BT106.setText(" ");
+                            BT106.setText(a);
                         else if(z==1)
                             BT106.setDisable(true);
                         else if(z==0)
@@ -4900,7 +4862,7 @@ public class Controller implements Initializable {
 
                       //selectflag0
                         if(z==2)
-                            BT107.setText(" ");
+                            BT107.setText(a);
                         else if(z==1)
                             BT107.setDisable(true);
                         else if(z==0)
@@ -4910,7 +4872,7 @@ public class Controller implements Initializable {
 
                       //selectflag0
                         if(z==2)
-                            BT108.setText(" ");
+                            BT108.setText(a);
                         else if(z==1)
                             BT108.setDisable(true);
                         else if(z==0)
@@ -4920,7 +4882,7 @@ public class Controller implements Initializable {
 
                       //selectflag0
                         if(z==2)
-                            BT109.setText(" ");
+                            BT109.setText(a);
                         else if(z==1)
                             BT109.setDisable(true);
                         else if(z==0)
@@ -4929,7 +4891,7 @@ public class Controller implements Initializable {
                     case 10:
                         //selectflag0
                         if(z==2)
-                            BT1010.setText(" ");
+                            BT1010.setText(a);
                         else if(z==1)
                             BT1010.setDisable(true);
                         else if(z==0)
@@ -4939,7 +4901,7 @@ public class Controller implements Initializable {
                     case 11:
                         //selectflag0
                         if(z==2)
-                            BT1011.setText(" ");
+                            BT1011.setText(a);
                         else if(z==1)
                             BT1011.setDisable(true);
                         else if(z==0)
@@ -4949,7 +4911,7 @@ public class Controller implements Initializable {
                     case 12:
                         //selectflag0
                         if(z==2)
-                            BT1012.setText(" ");
+                            BT1012.setText(a);
                         else if(z==1)
                             BT1012.setDisable(true);
                         else if(z==0)
