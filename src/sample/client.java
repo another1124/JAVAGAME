@@ -41,13 +41,18 @@ public class client extends Thread{
                     output.println(mwy);
                     output.println(ewx);
                     output.println(ewy);
-                    output.println(dpc);
+                    //output.println(dpc);
                     output.println(mwhp);
                     output.println(ewhp);
                     output.println(mywtrun);
                     if(mywtrun==false) {
                         System.out.println("CHANGE2");
                         flag = false;
+                    }
+                    try {
+                        Thread.sleep(300);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
                 }
                 while (flag==false)

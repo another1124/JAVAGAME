@@ -1,5 +1,6 @@
 package sample;
 
+import javafx.animation.AnimationTimer;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.fxml.Initializable;
@@ -34,7 +35,7 @@ public class Controller implements Initializable {
     public Label enwhp;
     public Label mywhp;
     private client client=new client();
-    int mwx=6,mwy=10,ewx=6,ewy=2,dpc=1;
+    int mwx=6,mwy=10,ewx=6,ewy=3,dpc=1;
     int a,b,c=0,d;
     boolean firstturn=true,test=false;
     boolean mywtrun=true,mywac=false,enwtrun=false;
@@ -44,41 +45,62 @@ public class Controller implements Initializable {
     private String mysqlstring = "jdbc:mysql://localhost:80/GAME?user=root&password=123qwe" +
             "&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8";
     private Turnex turnex=new Turnex();
+    private AnimationTimer animationTimer=new AnimationTimer() {
+        @Override
+        public void handle(long l) {
+
+                ewar.hp = client.ewhp;
+                enwhp.setText(Integer.toString(ewar.hp));
+                mwar.hp = client.mwhp;
+                mywhp.setText(Integer.toString(mwar.hp));
+                ewy=13-ewy;
+                GAN(ewx, ewy, 2, " ");
+                ewx = client.ewx;///GANNNNNNNNNNNNNNNN;
+                ewy = 13-client.ewy;
+                GAN(ewx, ewy, 2, "敵戰");
+                if(mywtrun==true) {
+                    turnend.setDisable(true);
+                    animationTimer.stop();
+                    GAN(mwx,mwy,0," ");
+                }
+        }
+    };
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-           boolean flag = false;
-           BT62.setText("敵戰");
+
+
+            boolean flag = false;
+            BT63.setText("敵戰");
             BT610.setText("我戰");
-             BT610.setDisable(false);
-             BT612.setText(" ");
-        //    mywor.setOnMouseClicked(e -> {
-              //  range(mwx,mwy);
+            BT610.setDisable(false);
+            BT612.setText(" ");
+            //    mywor.setOnMouseClicked(e -> {
+            //  range(mwx,mwy);
                 /*mywor.setPadding(new Insets(0,0,0,30));
                 BT512.setDisable(true);
                 BT512.setDisable(false);*/
             //    System.out.println("TEST");
-           //
+            //
             client.start();
-       //    ini();
-        //   getid();
-        if(mywtrun==true)
-        {
-           OnAction();
-           turn();
-           ATK();
-        if (firstturn)
-        {
-            if(dpc==1) {
-                mywtrun=true;
-                client.update(mywtrun);
-                enwtrun=false;
+            //    ini();
+            //   getid();
+
+
+            if (mywtrun == true) {
+                OnAction();
+                turn();
+                ATK();
+                if (firstturn) {
+                    if (dpc == 1) {
+                        mywtrun = true;
+                        client.update(mywtrun);
+                        enwtrun = false;
+                    } else {
+                        mywtrun = false;
+                        enwtrun = true;
+                    }
+                }
             }
-            else {
-                mywtrun=false;
-                enwtrun=true;
-            }
-        }
-        }
 
     }
     public void ATK()
@@ -119,9 +141,9 @@ public class Controller implements Initializable {
             textclear(1);
            // turnex.start();
             turnend.setDisable(true);
-
             //turnend.setDisable(false);
           // turndata(1,false);
+            animationTimer.start();
     });
 
         testturn.setOnAction(e->{
