@@ -74,7 +74,7 @@
       <Button fx:id="BT67" disable="true" mnemonicParsing="false" prefHeight="25.0" prefWidth="40.0" text=" " GridPane.columnIndex="6" GridPane.rowIndex="7" />
       <Button fx:id="BT68" disable="true" mnemonicParsing="false" prefHeight="25.0" prefWidth="40.0" text=" " GridPane.columnIndex="6" GridPane.rowIndex="8" />
       <Button fx:id="BT69" disable="true" mnemonicParsing="false" prefHeight="25.0" prefWidth="40.0" text=" " GridPane.columnIndex="6" GridPane.rowIndex="9" />
-      <Button fx:id="BT610" disable="true" mnemonicParsing="false" prefHeight="25.0" prefWidth="40.0" text=" " GridPane.columnIndex="6" GridPane.rowIndex="10" />
+      <Button fx:id="BT610"  disable="true" mnemonicParsing="false" prefHeight="25.0" prefWidth="40.0" text=" " GridPane.columnIndex="6" GridPane.rowIndex="10" />
       <Button fx:id="BT611" disable="true" mnemonicParsing="false" prefHeight="25.0" prefWidth="40.0" text=" " GridPane.columnIndex="6" GridPane.rowIndex="11" />
       <Button fx:id="BT612" disable="true" mnemonicParsing="false" prefHeight="25.0" prefWidth="40.0" text=" " GridPane.columnIndex="6" GridPane.rowIndex="12" />
       <Button fx:id="BT71" disable="true" mnemonicParsing="false" prefHeight="25.0" prefWidth="40.0" text=" " GridPane.columnIndex="7" GridPane.rowIndex="1" />

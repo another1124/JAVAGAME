@@ -5,6 +5,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.util.Duration;
@@ -36,7 +37,7 @@ public class Controller implements Initializable {
     public Label mywhp;
     private client client=new client();
     int mwx=6,mwy=10,ewx=6,ewy=3,dpc=1;
-    int a,b,c=0,d;
+    int a,b,c=0,d=0;
     boolean firstturn=true,test=false;
     boolean mywtrun=true,mywac=false,enwtrun=false;
     boolean WATKflag=false,ATKflag=false;
@@ -49,70 +50,106 @@ public class Controller implements Initializable {
         @Override
         public void handle(long l) {
 
-                ewar.hp = client.ewhp;
-                enwhp.setText(Integer.toString(ewar.hp));
-                mwar.hp = client.mwhp;
-                mywhp.setText(Integer.toString(mwar.hp));
-                ewy=13-ewy;
-                GAN(ewx, ewy, 2, " ");
-                ewx = client.ewx;///GANNNNNNNNNNNNNNNN;
-                ewy = 13-client.ewy;
-                GAN(ewx, ewy, 2, "敵戰");
-                if(mywtrun==true) {
-                    turnend.setDisable(true);
-                    animationTimer.stop();
-                    GAN(mwx,mwy,0," ");
-                }
+            ewar.hp = client.ewhp;
+            enwhp.setText(Integer.toString(ewar.hp));
+            mwar.hp = client.mwhp;
+            mywhp.setText(Integer.toString(mwar.hp));
+            //ewy=13-ewy;
+            if(client.deathflag==true)
+            {
+                GAN(mwx,mwy,2," ");
+                mwx=0;mwy=0;
+            }
+            if(client.loseflag==true)
+            {
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Gamemessage");
+                alert.setHeaderText("遊戲失敗");
+                alert.show();
+                client.shotdown();
+                animationTimer.stop();
+            }
+           // winlose();
+            GAN(ewx, ewy, 2, " ");
+            ewx = client.ewx;///GANNNNNNNNNNNNNNNN;
+            ewy = 13-client.ewy;
+            GAN(ewx, ewy, 2, "敵戰");
+            if(client.mywtrun==true) {
+                enwtrun=false;
+                mywtrun=true;
+                mywac=false;
+                turnend.setDisable(false);
+                animationTimer.stop();
+                GAN(mwx,mwy,0," ");
+            }
         }
     };
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
 
 
-            boolean flag = false;
-            BT63.setText("敵戰");
-            BT610.setText("我戰");
-            BT610.setDisable(false);
-            BT612.setText(" ");
-            //    mywor.setOnMouseClicked(e -> {
-            //  range(mwx,mwy);
+        boolean flag = false;
+        BT63.setText("敵戰");
+        BT610.setText("我戰");
+        BT610.setDisable(false);
+        BT612.setText(" ");
+        //    mywor.setOnMouseClicked(e -> {
+        //  range(mwx,mwy);
                 /*mywor.setPadding(new Insets(0,0,0,30));
                 BT512.setDisable(true);
                 BT512.setDisable(false);*/
-            //    System.out.println("TEST");
-            //
-            client.start();
-            //    ini();
-            //   getid();
+        //    System.out.println("TEST");
+        //
+        client.start();
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        mywtrun=client.mywtrun;
+        OnAction();
+        turn();
+        ATK();
+        if (mywtrun) {//?????????????????????????????????????????
+
+        }else
+            end();
 
 
-            if (mywtrun == true) {
-                OnAction();
-                turn();
-                ATK();
-                if (firstturn) {
-                    if (dpc == 1) {
-                        mywtrun = true;
-                        client.update(mywtrun);
-                        enwtrun = false;
-                    } else {
-                        mywtrun = false;
-                        enwtrun = true;
-                    }
-                }
-            }
 
+    }
+    public void winlose()
+    {
+        if(client.deathflag==true)
+        {
+            client.shotdown();
+        }
+    }
+    public void end(){
+        enwtrun=true;
+        textclear(1);
+        mywac=false;
+        mywtrun=false;
+        ATKflag=false;//??????
+        WATKflag=false;
+        ATTACK.setDisable(true);
+        WAIT.setDisable(true);
+        client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+        client.update(mywtrun);
+        turnend.setDisable(true);
+        ATTACK.setDisable(true);
+        WAIT.setDisable(true);
+        textclear(1);
+        turnend.setDisable(true);
+        animationTimer.start();
     }
     public void ATK()
     {
         ATTACK.setOnAction(e->{
-            if(mywac)
-            {
                 ATKflag=true;
                 WATKflag=true;
                 range(mwx,mwy,1);
                 mywac=false;
-            }
         });
         WAIT.setOnAction(e->{
             ATTACK.setDisable(true);
@@ -124,27 +161,8 @@ public class Controller implements Initializable {
     public  void turn()
     {
         turnend.setOnAction(e->{
-            enwtrun=true;
-            textclear(1);
-            mywac=false;
-            mywtrun=false;
-            ATKflag=false;//??????
-            WATKflag=false;
-            ATTACK.setDisable(true);
-            WAIT.setDisable(true);
-            client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
-            client.update(mywtrun);
-            turnend.setDisable(true);
-            ATTACK.setDisable(true);
-            WAIT.setDisable(true);
-            System.out.println("SSSSSS");
-            textclear(1);
-           // turnex.start();
-            turnend.setDisable(true);
-            //turnend.setDisable(false);
-          // turndata(1,false);
-            animationTimer.start();
-    });
+            end();
+        });
 
         testturn.setOnAction(e->{
             enwtrun=false;
@@ -159,8 +177,27 @@ public class Controller implements Initializable {
         if(WATKflag==true) {
             WATKflag = false;
             ewar.hp-=mwar.atk;
+            if(ewar.hp<=0) {
+                GAN(ewx,ewy,2," ");
+                ewx=0;ewy=0;
+                ewar.hp = 0;
+            }
             client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             enwhp.setText(Integer.toString(ewar.hp));
+            if(ewar.hp==0)
+            {
+                client.winflag=true;
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Gamemessage");
+                alert.setHeaderText("遊戲勝利");
+                alert.showAndWait();;
+                client.shotdown();
+            }
             textclear(mwx,mwy,1);
             ATTACK.setDisable(true);
             WAIT.setDisable(true);
@@ -169,23 +206,23 @@ public class Controller implements Initializable {
     }
     public void range(int x,int y,int z)
     {
-            System.out.println("TTTT");
-            mwx=x; mwy=y;
-            for (a = 1; a <= 10; a++) {
-                for (b = 1; b <= 12; b++) {
-                    if (mwx > a)
-                        c += mwx - a;
-                    else
-                        c += a - mwx;
-                    if (mwy > b)
-                        c += mwy - b;
-                    else
-                        c += b-mwy;
-                    if (c <= z)
-                        GAN(a, b,0," ");
-                    c = 0;
-                }
+        System.out.println("TTTT");
+        mwx=x; mwy=y;
+        for (a = 1; a <= 10; a++) {
+            for (b = 1; b <= 12; b++) {
+                if (mwx > a)
+                    c += mwx - a;
+                else
+                    c += a - mwx;
+                if (mwy > b)
+                    c += mwy - b;
+                else
+                    c += b-mwy;
+                if (c <= z)
+                    GAN(a, b,0," ");
+                c = 0;
             }
+        }
     }
     public  void textclear(int z)//control z=2clearText z=1button disable z=0 button enable
     {
@@ -224,7 +261,7 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT11.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT11.getText()=="我戰" && mywtrun==true && mywac==false)//equal("我戰") 若有空需替換
             {
                 mywac=true;
                 range(1,1,2);
@@ -241,8 +278,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT11.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -270,8 +307,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT12.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -299,8 +336,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT13.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -328,8 +365,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT14.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -357,8 +394,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT15.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -386,8 +423,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT16.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -415,8 +452,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT17.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -444,8 +481,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT18.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -473,8 +510,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT19.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -502,8 +539,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT110.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -531,8 +568,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT111.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -560,8 +597,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT112.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -589,8 +626,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT21.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -618,8 +655,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT22.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -647,8 +684,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT23.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -676,8 +713,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT24.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -705,8 +742,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT25.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -734,8 +771,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT26.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -763,8 +800,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT27.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -792,8 +829,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT28.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -821,8 +858,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT29.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -850,8 +887,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT210.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -879,8 +916,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT211.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -908,8 +945,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT212.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -937,8 +974,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT31.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -966,8 +1003,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT32.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -995,8 +1032,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT33.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1024,8 +1061,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT34.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1053,8 +1090,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT35.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1082,8 +1119,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT36.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1111,8 +1148,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT37.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1140,8 +1177,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT38.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1169,8 +1206,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT39.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1198,8 +1235,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT310.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1227,8 +1264,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT311.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1256,8 +1293,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT312.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1285,8 +1322,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT41.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1314,8 +1351,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT42.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1343,8 +1380,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT43.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1372,8 +1409,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT44.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1401,8 +1438,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT45.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1430,8 +1467,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT46.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1459,8 +1496,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT47.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1488,8 +1525,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT48.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1517,8 +1554,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT49.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1546,8 +1583,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT410.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1575,8 +1612,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT411.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1604,8 +1641,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT412.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1633,8 +1670,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT51.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1662,8 +1699,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT52.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1691,8 +1728,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT53.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1720,8 +1757,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT54.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1749,8 +1786,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT55.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1778,8 +1815,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT56.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1807,8 +1844,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT57.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1836,8 +1873,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT58.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1865,8 +1902,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT59.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1894,8 +1931,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT510.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1923,8 +1960,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT511.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1952,8 +1989,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT512.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -1981,8 +2018,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT61.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2010,8 +2047,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT62.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2039,8 +2076,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT63.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2068,8 +2105,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT64.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2097,8 +2134,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT65.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2126,8 +2163,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT66.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2155,8 +2192,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT67.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2184,8 +2221,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT68.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2213,8 +2250,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT69.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2242,8 +2279,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT610.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2271,8 +2308,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT611.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2300,8 +2337,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT612.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2329,8 +2366,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT71.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2358,8 +2395,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT72.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2387,8 +2424,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT73.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2416,8 +2453,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT74.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2445,8 +2482,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT75.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2474,8 +2511,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT76.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2503,8 +2540,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT77.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2532,8 +2569,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT78.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2561,8 +2598,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT79.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2590,8 +2627,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT710.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2619,8 +2656,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT711.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2648,8 +2685,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT712.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2677,8 +2714,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT81.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2706,8 +2743,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT82.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2735,8 +2772,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT83.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2764,8 +2801,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT84.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2793,8 +2830,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT85.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2822,8 +2859,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT86.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2851,8 +2888,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT87.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2880,8 +2917,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT88.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2909,8 +2946,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT89.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2938,8 +2975,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT810.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2967,8 +3004,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT811.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -2996,8 +3033,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT812.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -3025,8 +3062,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT91.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -3054,8 +3091,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT92.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -3083,8 +3120,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT93.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -3112,8 +3149,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT94.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -3141,8 +3178,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT95.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -3170,8 +3207,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT96.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -3199,8 +3236,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT97.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -3228,8 +3265,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT98.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -3257,8 +3294,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT99.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -3286,8 +3323,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT910.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -3315,8 +3352,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT911.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -3344,8 +3381,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT912.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -3373,8 +3410,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT101.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -3402,8 +3439,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT102.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -3431,8 +3468,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT103.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -3460,8 +3497,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT104.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -3489,8 +3526,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT105.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -3518,8 +3555,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT106.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -3547,8 +3584,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT107.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -3576,8 +3613,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT108.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -3605,8 +3642,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT109.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -3634,8 +3671,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT1010.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -3663,8 +3700,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT1011.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -3692,8 +3729,8 @@ public class Controller implements Initializable {
                     WAIT.setDisable(false);
                     textclear(mwx,mwy,1);
                     BT1012.setText("我戰");
-                    //mywac=false;
-                    mywtrun=false;
+                    mywac=false;
+                    //mywtrun=false;
                 }
             }
         });
@@ -3706,93 +3743,93 @@ public class Controller implements Initializable {
                 switch (y) {
                     case 1:
 
-                      //selectflag1
+                        //selectflag1
                         if(z==2)
                             BT11.setText(a);
                         else if(z==1)
                             BT11.setDisable(true);
                         else if(z==0)
-                        BT11.setDisable(false);
+                            BT11.setDisable(false);
                         break;
                     case 2:
 
-                      //selectflag1
+                        //selectflag1
                         if(z==2)
                             BT12.setText(a);
                         else if(z==1)
                             BT12.setDisable(true);
                         else if(z==0)
-                        BT12.setDisable(false);
+                            BT12.setDisable(false);
                         break;
                     case 3:
 
-                      //selectflag1
+                        //selectflag1
                         if(z==2)
                             BT13.setText(a);
                         else if(z==1)
                             BT13.setDisable(true);
                         else if(z==0)
-                        BT13.setDisable(false);
+                            BT13.setDisable(false);
                         break;
                     case 4:
 
-                      //selectflag1
+                        //selectflag1
                         if(z==2)
                             BT14.setText(a);
                         else if(z==1)
                             BT14.setDisable(true);
                         else if(z==0)
-                        BT14.setDisable(false);
+                            BT14.setDisable(false);
                         break;
                     case 5:
 
-                      //selectflag1
+                        //selectflag1
                         if(z==2)
                             BT15.setText(a);
                         else if(z==1)
                             BT15.setDisable(true);
                         else if(z==0)
-                        BT15.setDisable(false);
+                            BT15.setDisable(false);
                         break;
                     case 6:
 
-                      //selectflag1
+                        //selectflag1
                         if(z==2)
                             BT16.setText(a);
                         else if(z==1)
                             BT16.setDisable(true);
                         else if(z==0)
-                        BT16.setDisable(false);
+                            BT16.setDisable(false);
                         break;
                     case 7:
 
-                      //selectflag1
+                        //selectflag1
                         if(z==2)
                             BT17.setText(a);
                         else if(z==1)
                             BT17.setDisable(true);
                         else if(z==0)
-                        BT17.setDisable(false);
+                            BT17.setDisable(false);
                         break;
                     case 8:
 
-                      //selectflag1
+                        //selectflag1
                         if(z==2)
                             BT18.setText(a);
                         else if(z==1)
                             BT18.setDisable(true);
                         else if(z==0)
-                        BT18.setDisable(false);
+                            BT18.setDisable(false);
                         break;
                     case 9:
 
-                      //selectflag1
+                        //selectflag1
                         if(z==2)
                             BT19.setText(a);
                         else if(z==1)
                             BT19.setDisable(true);
                         else if(z==0)
-                        BT19.setDisable(false);
+                            BT19.setDisable(false);
                         break;
                     case 10:
                         //selectflag1
@@ -3801,7 +3838,7 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT110.setDisable(true);
                         else if(z==0)
-                        BT110.setDisable(false);
+                            BT110.setDisable(false);
 
                         break;
                     case 11:
@@ -3811,7 +3848,7 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT111.setDisable(true);
                         else if(z==0)
-                        BT111.setDisable(false);
+                            BT111.setDisable(false);
 
                         break;
                     case 12:
@@ -3821,7 +3858,7 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT112.setDisable(true);
                         else if(z==0)
-                        BT112.setDisable(false);
+                            BT112.setDisable(false);
 
                         break;
                 }
@@ -3830,93 +3867,93 @@ public class Controller implements Initializable {
                 switch (y) {
                     case 1:
 
-                      //selectflag2
+                        //selectflag2
                         if(z==2)
                             BT21.setText(a);
                         else if(z==1)
                             BT21.setDisable(true);
                         else if(z==0)
-                        BT21.setDisable(false);
+                            BT21.setDisable(false);
                         break;
                     case 2:
 
-                      //selectflag2
+                        //selectflag2
                         if(z==2)
                             BT22.setText(a);
                         else if(z==1)
                             BT22.setDisable(true);
                         else if(z==0)
-                        BT22.setDisable(false);
+                            BT22.setDisable(false);
                         break;
                     case 3:
 
-                      //selectflag2
+                        //selectflag2
                         if(z==2)
                             BT23.setText(a);
                         else if(z==1)
                             BT23.setDisable(true);
                         else if(z==0)
-                        BT23.setDisable(false);
+                            BT23.setDisable(false);
                         break;
                     case 4:
 
-                      //selectflag2
+                        //selectflag2
                         if(z==2)
                             BT24.setText(a);
                         else if(z==1)
                             BT24.setDisable(true);
                         else if(z==0)
-                        BT24.setDisable(false);
+                            BT24.setDisable(false);
                         break;
                     case 5:
 
-                      //selectflag2
+                        //selectflag2
                         if(z==2)
                             BT25.setText(a);
                         else if(z==1)
                             BT25.setDisable(true);
                         else if(z==0)
-                        BT25.setDisable(false);
+                            BT25.setDisable(false);
                         break;
                     case 6:
 
-                      //selectflag2
+                        //selectflag2
                         if(z==2)
                             BT26.setText(a);
                         else if(z==1)
                             BT26.setDisable(true);
                         else if(z==0)
-                        BT26.setDisable(false);
+                            BT26.setDisable(false);
                         break;
                     case 7:
 
-                      //selectflag2
+                        //selectflag2
                         if(z==2)
                             BT27.setText(a);
                         else if(z==1)
                             BT27.setDisable(true);
                         else if(z==0)
-                        BT27.setDisable(false);
+                            BT27.setDisable(false);
                         break;
                     case 8:
 
-                      //selectflag2
+                        //selectflag2
                         if(z==2)
                             BT28.setText(a);
                         else if(z==1)
                             BT28.setDisable(true);
                         else if(z==0)
-                        BT28.setDisable(false);
+                            BT28.setDisable(false);
                         break;
                     case 9:
 
-                      //selectflag2
+                        //selectflag2
                         if(z==2)
                             BT29.setText(a);
                         else if(z==1)
                             BT29.setDisable(true);
                         else if(z==0)
-                        BT29.setDisable(false);
+                            BT29.setDisable(false);
                         break;
                     case 10:
                         //selectflag2
@@ -3925,7 +3962,7 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT210.setDisable(true);
                         else if(z==0)
-                        BT210.setDisable(false);
+                            BT210.setDisable(false);
 
                         break;
                     case 11:
@@ -3935,7 +3972,7 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT211.setDisable(true);
                         else if(z==0)
-                        BT211.setDisable(false);
+                            BT211.setDisable(false);
 
                         break;
                     case 12:
@@ -3945,7 +3982,7 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT212.setDisable(true);
                         else if(z==0)
-                        BT212.setDisable(false);
+                            BT212.setDisable(false);
 
                         break;
                 }
@@ -3954,93 +3991,93 @@ public class Controller implements Initializable {
                 switch (y) {
                     case 1:
 
-                      //selectflag3
+                        //selectflag3
                         if(z==2)
                             BT31.setText(a);
                         else if(z==1)
                             BT31.setDisable(true);
                         else if(z==0)
-                        BT31.setDisable(false);
+                            BT31.setDisable(false);
                         break;
                     case 2:
 
-                      //selectflag3
+                        //selectflag3
                         if(z==2)
                             BT32.setText(a);
                         else if(z==1)
                             BT32.setDisable(true);
                         else if(z==0)
-                        BT32.setDisable(false);
+                            BT32.setDisable(false);
                         break;
                     case 3:
 
-                      //selectflag3
+                        //selectflag3
                         if(z==2)
                             BT33.setText(a);
                         else if(z==1)
                             BT33.setDisable(true);
                         else if(z==0)
-                        BT33.setDisable(false);
+                            BT33.setDisable(false);
                         break;
                     case 4:
 
-                      //selectflag3
+                        //selectflag3
                         if(z==2)
                             BT34.setText(a);
                         else if(z==1)
                             BT34.setDisable(true);
                         else if(z==0)
-                        BT34.setDisable(false);
+                            BT34.setDisable(false);
                         break;
                     case 5:
 
-                      //selectflag3
+                        //selectflag3
                         if(z==2)
                             BT35.setText(a);
                         else if(z==1)
                             BT35.setDisable(true);
                         else if(z==0)
-                        BT35.setDisable(false);
+                            BT35.setDisable(false);
                         break;
                     case 6:
 
-                      //selectflag3
+                        //selectflag3
                         if(z==2)
                             BT36.setText(a);
                         else if(z==1)
                             BT36.setDisable(true);
                         else if(z==0)
-                        BT36.setDisable(false);
+                            BT36.setDisable(false);
                         break;
                     case 7:
 
-                      //selectflag3
+                        //selectflag3
                         if(z==2)
                             BT37.setText(a);
                         else if(z==1)
                             BT37.setDisable(true);
                         else if(z==0)
-                        BT37.setDisable(false);
+                            BT37.setDisable(false);
                         break;
                     case 8:
 
-                      //selectflag3
+                        //selectflag3
                         if(z==2)
                             BT38.setText(a);
                         else if(z==1)
                             BT38.setDisable(true);
                         else if(z==0)
-                        BT38.setDisable(false);
+                            BT38.setDisable(false);
                         break;
                     case 9:
 
-                      //selectflag3
+                        //selectflag3
                         if(z==2)
                             BT39.setText(a);
                         else if(z==1)
                             BT39.setDisable(true);
                         else if(z==0)
-                        BT39.setDisable(false);
+                            BT39.setDisable(false);
                         break;
                     case 10:
                         //selectflag3
@@ -4049,7 +4086,7 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT310.setDisable(true);
                         else if(z==0)
-                        BT310.setDisable(false);
+                            BT310.setDisable(false);
 
                         break;
                     case 11:
@@ -4059,7 +4096,7 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT311.setDisable(true);
                         else if(z==0)
-                        BT311.setDisable(false);
+                            BT311.setDisable(false);
 
                         break;
                     case 12:
@@ -4069,7 +4106,7 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT312.setDisable(true);
                         else if(z==0)
-                        BT312.setDisable(false);
+                            BT312.setDisable(false);
 
                         break;
                 }
@@ -4078,93 +4115,93 @@ public class Controller implements Initializable {
                 switch (y) {
                     case 1:
 
-                      //selectflag4
+                        //selectflag4
                         if(z==2)
                             BT41.setText(a);
                         else if(z==1)
                             BT41.setDisable(true);
                         else if(z==0)
-                        BT41.setDisable(false);
+                            BT41.setDisable(false);
                         break;
                     case 2:
 
-                      //selectflag4
+                        //selectflag4
                         if(z==2)
                             BT42.setText(a);
                         else if(z==1)
                             BT42.setDisable(true);
                         else if(z==0)
-                        BT42.setDisable(false);
+                            BT42.setDisable(false);
                         break;
                     case 3:
 
-                      //selectflag4
+                        //selectflag4
                         if(z==2)
                             BT43.setText(a);
                         else if(z==1)
                             BT43.setDisable(true);
                         else if(z==0)
-                        BT43.setDisable(false);
+                            BT43.setDisable(false);
                         break;
                     case 4:
 
-                      //selectflag4
+                        //selectflag4
                         if(z==2)
                             BT44.setText(a);
                         else if(z==1)
                             BT44.setDisable(true);
                         else if(z==0)
-                        BT44.setDisable(false);
+                            BT44.setDisable(false);
                         break;
                     case 5:
 
-                      //selectflag4
+                        //selectflag4
                         if(z==2)
                             BT45.setText(a);
                         else if(z==1)
                             BT45.setDisable(true);
                         else if(z==0)
-                        BT45.setDisable(false);
+                            BT45.setDisable(false);
                         break;
                     case 6:
 
-                      //selectflag4
+                        //selectflag4
                         if(z==2)
                             BT46.setText(a);
                         else if(z==1)
                             BT46.setDisable(true);
                         else if(z==0)
-                        BT46.setDisable(false);
+                            BT46.setDisable(false);
                         break;
                     case 7:
 
-                      //selectflag4
+                        //selectflag4
                         if(z==2)
                             BT47.setText(a);
                         else if(z==1)
                             BT47.setDisable(true);
                         else if(z==0)
-                        BT47.setDisable(false);
+                            BT47.setDisable(false);
                         break;
                     case 8:
 
-                      //selectflag4
+                        //selectflag4
                         if(z==2)
                             BT48.setText(a);
                         else if(z==1)
                             BT48.setDisable(true);
                         else if(z==0)
-                        BT48.setDisable(false);
+                            BT48.setDisable(false);
                         break;
                     case 9:
 
-                      //selectflag4
+                        //selectflag4
                         if(z==2)
                             BT49.setText(a);
                         else if(z==1)
                             BT49.setDisable(true);
                         else if(z==0)
-                        BT49.setDisable(false);
+                            BT49.setDisable(false);
                         break;
                     case 10:
                         //selectflag4
@@ -4173,7 +4210,7 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT410.setDisable(true);
                         else if(z==0)
-                        BT410.setDisable(false);
+                            BT410.setDisable(false);
 
                         break;
                     case 11:
@@ -4183,7 +4220,7 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT411.setDisable(true);
                         else if(z==0)
-                        BT411.setDisable(false);
+                            BT411.setDisable(false);
 
                         break;
                     case 12:
@@ -4193,7 +4230,7 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT412.setDisable(true);
                         else if(z==0)
-                        BT412.setDisable(false);
+                            BT412.setDisable(false);
 
                         break;
                 }
@@ -4202,93 +4239,93 @@ public class Controller implements Initializable {
                 switch (y) {
                     case 1:
 
-                      //selectflag5
+                        //selectflag5
                         if(z==2)
                             BT51.setText(a);
                         else if(z==1)
                             BT51.setDisable(true);
                         else if(z==0)
-                        BT51.setDisable(false);
+                            BT51.setDisable(false);
                         break;
                     case 2:
 
-                      //selectflag5
+                        //selectflag5
                         if(z==2)
                             BT52.setText(a);
                         else if(z==1)
                             BT52.setDisable(true);
                         else if(z==0)
-                        BT52.setDisable(false);
+                            BT52.setDisable(false);
                         break;
                     case 3:
 
-                      //selectflag5
+                        //selectflag5
                         if(z==2)
                             BT53.setText(a);
                         else if(z==1)
                             BT53.setDisable(true);
                         else if(z==0)
-                        BT53.setDisable(false);
+                            BT53.setDisable(false);
                         break;
                     case 4:
 
-                      //selectflag5
+                        //selectflag5
                         if(z==2)
                             BT54.setText(a);
                         else if(z==1)
                             BT54.setDisable(true);
                         else if(z==0)
-                        BT54.setDisable(false);
+                            BT54.setDisable(false);
                         break;
                     case 5:
 
-                      //selectflag5
+                        //selectflag5
                         if(z==2)
                             BT55.setText(a);
                         else if(z==1)
                             BT55.setDisable(true);
                         else if(z==0)
-                        BT55.setDisable(false);
+                            BT55.setDisable(false);
                         break;
                     case 6:
 
-                      //selectflag5
+                        //selectflag5
                         if(z==2)
                             BT56.setText(a);
                         else if(z==1)
                             BT56.setDisable(true);
                         else if(z==0)
-                        BT56.setDisable(false);
+                            BT56.setDisable(false);
                         break;
                     case 7:
 
-                      //selectflag5
+                        //selectflag5
                         if(z==2)
                             BT57.setText(a);
                         else if(z==1)
                             BT57.setDisable(true);
                         else if(z==0)
-                        BT57.setDisable(false);
+                            BT57.setDisable(false);
                         break;
                     case 8:
 
-                      //selectflag5
+                        //selectflag5
                         if(z==2)
                             BT58.setText(a);
                         else if(z==1)
                             BT58.setDisable(true);
                         else if(z==0)
-                        BT58.setDisable(false);
+                            BT58.setDisable(false);
                         break;
                     case 9:
 
-                      //selectflag5
+                        //selectflag5
                         if(z==2)
                             BT59.setText(a);
                         else if(z==1)
                             BT59.setDisable(true);
                         else if(z==0)
-                        BT59.setDisable(false);
+                            BT59.setDisable(false);
                         break;
                     case 10:
                         //selectflag5
@@ -4297,7 +4334,7 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT510.setDisable(true);
                         else if(z==0)
-                        BT510.setDisable(false);
+                            BT510.setDisable(false);
 
                         break;
                     case 11:
@@ -4307,7 +4344,7 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT511.setDisable(true);
                         else if(z==0)
-                        BT511.setDisable(false);
+                            BT511.setDisable(false);
 
                         break;
                     case 12:
@@ -4317,7 +4354,7 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT512.setDisable(true);
                         else if(z==0)
-                        BT512.setDisable(false);
+                            BT512.setDisable(false);
 
                         break;
                 }
@@ -4326,93 +4363,93 @@ public class Controller implements Initializable {
                 switch (y) {
                     case 1:
 
-                      //selectflag6
+                        //selectflag6
                         if(z==2)
                             BT61.setText(a);
                         else if(z==1)
                             BT61.setDisable(true);
                         else if(z==0)
-                        BT61.setDisable(false);
+                            BT61.setDisable(false);
                         break;
                     case 2:
 
-                      //selectflag6
+                        //selectflag6
                         if(z==2)
                             BT62.setText(a);
                         else if(z==1)
                             BT62.setDisable(true);
                         else if(z==0)
-                        BT62.setDisable(false);
+                            BT62.setDisable(false);
                         break;
                     case 3:
 
-                      //selectflag6
+                        //selectflag6
                         if(z==2)
                             BT63.setText(a);
                         else if(z==1)
                             BT63.setDisable(true);
                         else if(z==0)
-                        BT63.setDisable(false);
+                            BT63.setDisable(false);
                         break;
                     case 4:
 
-                      //selectflag6
+                        //selectflag6
                         if(z==2)
                             BT64.setText(a);
                         else if(z==1)
                             BT64.setDisable(true);
                         else if(z==0)
-                        BT64.setDisable(false);
+                            BT64.setDisable(false);
                         break;
                     case 5:
 
-                      //selectflag6
+                        //selectflag6
                         if(z==2)
                             BT65.setText(a);
                         else if(z==1)
                             BT65.setDisable(true);
                         else if(z==0)
-                        BT65.setDisable(false);
+                            BT65.setDisable(false);
                         break;
                     case 6:
 
-                      //selectflag6
+                        //selectflag6
                         if(z==2)
                             BT66.setText(a);
                         else if(z==1)
                             BT66.setDisable(true);
                         else if(z==0)
-                        BT66.setDisable(false);
+                            BT66.setDisable(false);
                         break;
                     case 7:
 
-                      //selectflag6
+                        //selectflag6
                         if(z==2)
                             BT67.setText(a);
                         else if(z==1)
                             BT67.setDisable(true);
                         else if(z==0)
-                        BT67.setDisable(false);
+                            BT67.setDisable(false);
                         break;
                     case 8:
 
-                      //selectflag6
+                        //selectflag6
                         if(z==2)
                             BT68.setText(a);
                         else if(z==1)
                             BT68.setDisable(true);
                         else if(z==0)
-                        BT68.setDisable(false);
+                            BT68.setDisable(false);
                         break;
                     case 9:
 
-                      //selectflag6
+                        //selectflag6
                         if(z==2)
                             BT69.setText(a);
                         else if(z==1)
                             BT69.setDisable(true);
                         else if(z==0)
-                        BT69.setDisable(false);
+                            BT69.setDisable(false);
                         break;
                     case 10:
                         //selectflag6
@@ -4421,7 +4458,7 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT610.setDisable(true);
                         else if(z==0)
-                        BT610.setDisable(false);
+                            BT610.setDisable(false);
 
                         break;
                     case 11:
@@ -4431,7 +4468,7 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT611.setDisable(true);
                         else if(z==0)
-                        BT611.setDisable(false);
+                            BT611.setDisable(false);
 
                         break;
                     case 12:
@@ -4441,7 +4478,7 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT612.setDisable(true);
                         else if(z==0)
-                        BT612.setDisable(false);
+                            BT612.setDisable(false);
 
                         break;
                 }
@@ -4450,93 +4487,93 @@ public class Controller implements Initializable {
                 switch (y) {
                     case 1:
 
-                      //selectflag7
+                        //selectflag7
                         if(z==2)
                             BT71.setText(a);
                         else if(z==1)
                             BT71.setDisable(true);
                         else if(z==0)
-                        BT71.setDisable(false);
+                            BT71.setDisable(false);
                         break;
                     case 2:
 
-                      //selectflag7
+                        //selectflag7
                         if(z==2)
                             BT72.setText(a);
                         else if(z==1)
                             BT72.setDisable(true);
                         else if(z==0)
-                        BT72.setDisable(false);
+                            BT72.setDisable(false);
                         break;
                     case 3:
 
-                      //selectflag7
+                        //selectflag7
                         if(z==2)
                             BT73.setText(a);
                         else if(z==1)
                             BT73.setDisable(true);
                         else if(z==0)
-                        BT73.setDisable(false);
+                            BT73.setDisable(false);
                         break;
                     case 4:
 
-                      //selectflag7
+                        //selectflag7
                         if(z==2)
                             BT74.setText(a);
                         else if(z==1)
                             BT74.setDisable(true);
                         else if(z==0)
-                        BT74.setDisable(false);
+                            BT74.setDisable(false);
                         break;
                     case 5:
 
-                      //selectflag7
+                        //selectflag7
                         if(z==2)
                             BT75.setText(a);
                         else if(z==1)
                             BT75.setDisable(true);
                         else if(z==0)
-                        BT75.setDisable(false);
+                            BT75.setDisable(false);
                         break;
                     case 6:
 
-                      //selectflag7
+                        //selectflag7
                         if(z==2)
                             BT76.setText(a);
                         else if(z==1)
                             BT76.setDisable(true);
                         else if(z==0)
-                        BT76.setDisable(false);
+                            BT76.setDisable(false);
                         break;
                     case 7:
 
-                      //selectflag7
+                        //selectflag7
                         if(z==2)
                             BT77.setText(a);
                         else if(z==1)
                             BT77.setDisable(true);
                         else if(z==0)
-                        BT77.setDisable(false);
+                            BT77.setDisable(false);
                         break;
                     case 8:
 
-                      //selectflag7
+                        //selectflag7
                         if(z==2)
                             BT78.setText(a);
                         else if(z==1)
                             BT78.setDisable(true);
                         else if(z==0)
-                        BT78.setDisable(false);
+                            BT78.setDisable(false);
                         break;
                     case 9:
 
-                      //selectflag7
+                        //selectflag7
                         if(z==2)
                             BT79.setText(a);
                         else if(z==1)
                             BT79.setDisable(true);
                         else if(z==0)
-                        BT79.setDisable(false);
+                            BT79.setDisable(false);
                         break;
                     case 10:
                         //selectflag7
@@ -4545,7 +4582,7 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT710.setDisable(true);
                         else if(z==0)
-                        BT710.setDisable(false);
+                            BT710.setDisable(false);
 
                         break;
                     case 11:
@@ -4555,7 +4592,7 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT711.setDisable(true);
                         else if(z==0)
-                        BT711.setDisable(false);
+                            BT711.setDisable(false);
 
                         break;
                     case 12:
@@ -4565,7 +4602,7 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT712.setDisable(true);
                         else if(z==0)
-                        BT712.setDisable(false);
+                            BT712.setDisable(false);
 
                         break;
                 }
@@ -4574,93 +4611,93 @@ public class Controller implements Initializable {
                 switch (y) {
                     case 1:
 
-                      //selectflag8
+                        //selectflag8
                         if(z==2)
                             BT81.setText(a);
                         else if(z==1)
                             BT81.setDisable(true);
                         else if(z==0)
-                        BT81.setDisable(false);
+                            BT81.setDisable(false);
                         break;
                     case 2:
 
-                      //selectflag8
+                        //selectflag8
                         if(z==2)
                             BT82.setText(a);
                         else if(z==1)
                             BT82.setDisable(true);
                         else if(z==0)
-                        BT82.setDisable(false);
+                            BT82.setDisable(false);
                         break;
                     case 3:
 
-                      //selectflag8
+                        //selectflag8
                         if(z==2)
                             BT83.setText(a);
                         else if(z==1)
                             BT83.setDisable(true);
                         else if(z==0)
-                        BT83.setDisable(false);
+                            BT83.setDisable(false);
                         break;
                     case 4:
 
-                      //selectflag8
+                        //selectflag8
                         if(z==2)
                             BT84.setText(a);
                         else if(z==1)
                             BT84.setDisable(true);
                         else if(z==0)
-                        BT84.setDisable(false);
+                            BT84.setDisable(false);
                         break;
                     case 5:
 
-                      //selectflag8
+                        //selectflag8
                         if(z==2)
                             BT85.setText(a);
                         else if(z==1)
                             BT85.setDisable(true);
                         else if(z==0)
-                        BT85.setDisable(false);
+                            BT85.setDisable(false);
                         break;
                     case 6:
 
-                      //selectflag8
+                        //selectflag8
                         if(z==2)
                             BT86.setText(a);
                         else if(z==1)
                             BT86.setDisable(true);
                         else if(z==0)
-                        BT86.setDisable(false);
+                            BT86.setDisable(false);
                         break;
                     case 7:
 
-                      //selectflag8
+                        //selectflag8
                         if(z==2)
                             BT87.setText(a);
                         else if(z==1)
                             BT87.setDisable(true);
                         else if(z==0)
-                        BT87.setDisable(false);
+                            BT87.setDisable(false);
                         break;
                     case 8:
 
-                      //selectflag8
+                        //selectflag8
                         if(z==2)
                             BT88.setText(a);
                         else if(z==1)
                             BT88.setDisable(true);
                         else if(z==0)
-                        BT88.setDisable(false);
+                            BT88.setDisable(false);
                         break;
                     case 9:
 
-                      //selectflag8
+                        //selectflag8
                         if(z==2)
                             BT89.setText(a);
                         else if(z==1)
                             BT89.setDisable(true);
                         else if(z==0)
-                        BT89.setDisable(false);
+                            BT89.setDisable(false);
                         break;
                     case 10:
                         //selectflag8
@@ -4669,7 +4706,7 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT810.setDisable(true);
                         else if(z==0)
-                        BT810.setDisable(false);
+                            BT810.setDisable(false);
 
                         break;
                     case 11:
@@ -4679,17 +4716,17 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT811.setDisable(true);
                         else if(z==0)
-                        BT811.setDisable(false);
+                            BT811.setDisable(false);
 
                         break;
                     case 12:
                         //selectflag88
-                       if(z==2)
-                           BT812.setText(a);
+                        if(z==2)
+                            BT812.setText(a);
                         else  if(z==1)
                             BT812.setDisable(true);
                         else if(z==0)
-                        BT812.setDisable(false);
+                            BT812.setDisable(false);
 
                         break;
                 }
@@ -4698,93 +4735,93 @@ public class Controller implements Initializable {
                 switch (y) {
                     case 1:
 
-                      //selectflag9
+                        //selectflag9
                         if(z==2)
                             BT91.setText(a);
                         else if(z==1)
                             BT91.setDisable(true);
                         else if(z==0)
-                        BT91.setDisable(false);
+                            BT91.setDisable(false);
                         break;
                     case 2:
 
-                      //selectflag9
+                        //selectflag9
                         if(z==2)
                             BT92.setText(a);
                         else if(z==1)
                             BT92.setDisable(true);
                         else if(z==0)
-                        BT92.setDisable(false);
+                            BT92.setDisable(false);
                         break;
                     case 3:
 
-                      //selectflag9
+                        //selectflag9
                         if(z==2)
                             BT93.setText(a);
                         else if(z==1)
                             BT93.setDisable(true);
                         else if(z==0)
-                        BT93.setDisable(false);
+                            BT93.setDisable(false);
                         break;
                     case 4:
 
-                      //selectflag9
+                        //selectflag9
                         if(z==2)
                             BT94.setText(a);
                         else if(z==1)
                             BT94.setDisable(true);
                         else if(z==0)
-                        BT94.setDisable(false);
+                            BT94.setDisable(false);
                         break;
                     case 5:
 
-                      //selectflag9
+                        //selectflag9
                         if(z==2)
                             BT95.setText(a);
                         else if(z==1)
                             BT95.setDisable(true);
                         else if(z==0)
-                        BT95.setDisable(false);
+                            BT95.setDisable(false);
                         break;
                     case 6:
 
-                      //selectflag9
+                        //selectflag9
                         if(z==2)
                             BT96.setText(a);
                         else if(z==1)
                             BT96.setDisable(true);
                         else if(z==0)
-                        BT96.setDisable(false);
+                            BT96.setDisable(false);
                         break;
                     case 7:
 
-                      //selectflag9
+                        //selectflag9
                         if(z==2)
                             BT97.setText(a);
                         else if(z==1)
                             BT97.setDisable(true);
                         else if(z==0)
-                        BT97.setDisable(false);
+                            BT97.setDisable(false);
                         break;
                     case 8:
 
-                      //selectflag9
+                        //selectflag9
                         if(z==2)
                             BT98.setText(a);
                         else if(z==1)
                             BT98.setDisable(true);
                         else if(z==0)
-                        BT98.setDisable(false);
+                            BT98.setDisable(false);
                         break;
                     case 9:
 
-                      //selectflag9
+                        //selectflag9
                         if(z==2)
                             BT99.setText(a);
                         else if(z==1)
                             BT99.setDisable(true);
                         else if(z==0)
-                        BT99.setDisable(false);
+                            BT99.setDisable(false);
                         break;
                     case 10:
                         //selectflag9
@@ -4793,7 +4830,7 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT910.setDisable(true);
                         else if(z==0)
-                        BT910.setDisable(false);
+                            BT910.setDisable(false);
 
                         break;
                     case 11:
@@ -4803,7 +4840,7 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT911.setDisable(true);
                         else if(z==0)
-                        BT911.setDisable(false);
+                            BT911.setDisable(false);
 
                         break;
                     case 12:
@@ -4813,7 +4850,7 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT912.setDisable(true);
                         else if(z==0)
-                        BT912.setDisable(false);
+                            BT912.setDisable(false);
 
                         break;
                 }
@@ -4822,93 +4859,93 @@ public class Controller implements Initializable {
                 switch (y) {
                     case 1:
 
-                      //selectflag0
+                        //selectflag0
                         if(z==2)
                             BT101.setText(a);
                         else if(z==1)
                             BT101.setDisable(true);
                         else if(z==0)
-                        BT101.setDisable(false);
+                            BT101.setDisable(false);
                         break;
                     case 2:
 
-                      //selectflag0
+                        //selectflag0
                         if(z==2)
                             BT102.setText(a);
                         else if(z==1)
                             BT102.setDisable(true);
                         else if(z==0)
-                        BT102.setDisable(false);
+                            BT102.setDisable(false);
                         break;
                     case 3:
 
-                      //selectflag0
+                        //selectflag0
                         if(z==2)
                             BT103.setText(a);
                         else if(z==1)
                             BT103.setDisable(true);
                         else if(z==0)
-                        BT103.setDisable(false);
+                            BT103.setDisable(false);
                         break;
                     case 4:
 
-                      //selectflag0
+                        //selectflag0
                         if(z==2)
                             BT104.setText(a);
                         else if(z==1)
                             BT104.setDisable(true);
                         else if(z==0)
-                        BT104.setDisable(false);
+                            BT104.setDisable(false);
                         break;
                     case 5:
 
-                      //selectflag0
+                        //selectflag0
                         if(z==2)
                             BT105.setText(a);
                         else if(z==1)
                             BT105.setDisable(true);
                         else if(z==0)
-                        BT105.setDisable(false);
+                            BT105.setDisable(false);
                         break;
                     case 6:
 
-                      //selectflag0
+                        //selectflag0
                         if(z==2)
                             BT106.setText(a);
                         else if(z==1)
                             BT106.setDisable(true);
                         else if(z==0)
-                        BT106.setDisable(false);
+                            BT106.setDisable(false);
                         break;
                     case 7:
 
-                      //selectflag0
+                        //selectflag0
                         if(z==2)
                             BT107.setText(a);
                         else if(z==1)
                             BT107.setDisable(true);
                         else if(z==0)
-                        BT107.setDisable(false);
+                            BT107.setDisable(false);
                         break;
                     case 8:
 
-                      //selectflag0
+                        //selectflag0
                         if(z==2)
                             BT108.setText(a);
                         else if(z==1)
                             BT108.setDisable(true);
                         else if(z==0)
-                        BT108.setDisable(false);
+                            BT108.setDisable(false);
                         break;
                     case 9:
 
-                      //selectflag0
+                        //selectflag0
                         if(z==2)
                             BT109.setText(a);
                         else if(z==1)
                             BT109.setDisable(true);
                         else if(z==0)
-                        BT109.setDisable(false);
+                            BT109.setDisable(false);
                         break;
                     case 10:
                         //selectflag0
@@ -4917,7 +4954,7 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT1010.setDisable(true);
                         else if(z==0)
-                        BT1010.setDisable(false);
+                            BT1010.setDisable(false);
 
                         break;
                     case 11:
@@ -4927,7 +4964,7 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT1011.setDisable(true);
                         else if(z==0)
-                        BT1011.setDisable(false);
+                            BT1011.setDisable(false);
 
                         break;
                     case 12:
@@ -4937,10 +4974,12 @@ public class Controller implements Initializable {
                         else if(z==1)
                             BT1012.setDisable(true);
                         else if(z==0)
-                        BT1012.setDisable(false);
+                            BT1012.setDisable(false);
 
                         break;
                 }
+                break;
+            default:
                 break;
         }
     }

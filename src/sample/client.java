@@ -1,5 +1,7 @@
 package sample;
 
+import javafx.scene.control.Alert;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -7,17 +9,19 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 public class client extends Thread{
-    int mwx=6,mwy=10,ewx=6,ewy=2,dpc=1,mwhp=150,ewhp=150;
+    int mwx=6,mwy=10,ewx=6,ewy=10,dpc=1,mwhp=150,ewhp=150;
     boolean firstturn=false, flag=true;
-    boolean test=false;
+    boolean stflag=false;
     boolean mywtrun=true,mywac=false,enwtrun=false;
     boolean WATKflag=false,ATKflag=false;
+    boolean deathflag=false;
+    boolean winflag=false,loseflag=false;
     public void update(int mwx,int mwy,int ewx,int ewy,int dpc,int mwhp,int ewhp)
     {
         this.mwx=mwx;
         this.mwy=mwy;
-        this.ewx=ewx;
-        this.ewy=ewy;
+        //this.ewx=ewx;
+        //this.ewy=ewy;
         this.dpc=dpc;
         this.mwhp=mwhp;
         this.ewhp=ewhp;
@@ -35,6 +39,8 @@ public class client extends Thread{
             client = new Socket("localhost", 7777);
             output = new PrintWriter(client.getOutputStream(), true);
             input = new BufferedReader(new InputStreamReader(client.getInputStream()));
+            mywtrun=Boolean.parseBoolean(input.readLine());
+            stflag=true;
             while (true) {
                 while (flag==true) {
                     output.println(mwx);
@@ -45,6 +51,8 @@ public class client extends Thread{
                     output.println(mwhp);
                     output.println(ewhp);
                     output.println(mywtrun);
+                    output.println(winflag);
+                    output.println(loseflag);
                     if(mywtrun==false) {
                         System.out.println("CHANGE2");
                         flag = false;
@@ -57,21 +65,35 @@ public class client extends Thread{
                 }
                 while (flag==false)
                 {
-
                     mwx = Integer.parseInt(input.readLine());
                     mwy = Integer.parseInt(input.readLine());
                     ewx = Integer.parseInt(input.readLine());
                     ewy = Integer.parseInt(input.readLine());
                     dpc = Integer.parseInt(input.readLine());
                     mwhp = Integer.parseInt(input.readLine());
+                    if(mwhp==0)
+                    {
+                        deathflag=true;
+                    }
                     ewhp = Integer.parseInt(input.readLine());
                     mywtrun = Boolean.parseBoolean(input.readLine());
+                    loseflag=Boolean.parseBoolean(input.readLine());
                     if(mywtrun==true) {
                         System.out.println("CHANGE");
                         flag = true;
                     }
+
                 }
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void shotdown()
+    {
+        try {
+            client.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
