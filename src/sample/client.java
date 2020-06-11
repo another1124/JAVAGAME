@@ -9,7 +9,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 public class client extends Thread{
-    int mwx=6,mwy=10,ewx=6,ewy=10,dpc=1,mwhp=150,ewhp=150;
+    int mwx=6,mwy=10,ewx=6,ewy=10,dpc=1,mwhp=150,ewhp=150,mahp=100,eahp=100;
     boolean firstturn=false, flag=true;
     boolean stflag=false;
     boolean mywtrun=true,mywac=false,enwtrun=false;

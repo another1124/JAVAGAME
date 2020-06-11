@@ -36,13 +36,15 @@ public class Controller implements Initializable {
     public Label enwhp;
     public Label mywhp;
     private client client=new client();
-    int mwx=6,mwy=10,ewx=6,ewy=3,dpc=1;
+    int mwx=6,mwy=10,ewx=6,ewy=3,dpc=1,max=7,may=10;
     int a,b,c=0,d=0;
     boolean firstturn=true,test=false;
-    boolean mywtrun=true,mywac=false,enwtrun=false;
-    boolean WATKflag=false,ATKflag=false;
+    boolean mywtrun=true,mywac=false,myaac=false,enwtrun=false,wturn=true,aturn=true;
+    boolean WATKflag=false,ATKflag=false,AATKflag=false;
     WAR mwar=new WAR();
     WAR ewar=new WAR();
+    ARC marc=new ARC();
+    ARC earc=new ARC();
     private String mysqlstring = "jdbc:mysql://localhost:80/GAME?user=root&password=123qwe" +
             "&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8";
     private Turnex turnex=new Turnex();
@@ -78,9 +80,13 @@ public class Controller implements Initializable {
                 enwtrun=false;
                 mywtrun=true;
                 mywac=false;
+                myaac=false;
+                wturn=true;
+                aturn=true;
                 turnend.setDisable(false);
                 animationTimer.stop();
                 GAN(mwx,mwy,0," ");
+                GAN(max,may,0," ");
             }
         }
     };
@@ -91,7 +97,10 @@ public class Controller implements Initializable {
         boolean flag = false;
         BT63.setText("敵戰");
         BT610.setText("我戰");
+        BT710.setText("我弓");
+        BT73.setText("敵弓");
         BT610.setDisable(false);
+        BT710.setDisable(false);
         BT612.setText(" ");
         //    mywor.setOnMouseClicked(e -> {
         //  range(mwx,mwy);
@@ -125,10 +134,15 @@ public class Controller implements Initializable {
             client.shotdown();
         }
     }
+    public void turnea()
+    {
+        textclear(1);
+    }
     public void end(){
         enwtrun=true;
         textclear(1);
         mywac=false;
+        myaac=false;
         mywtrun=false;
         ATKflag=false;//??????
         WATKflag=false;
@@ -147,15 +161,38 @@ public class Controller implements Initializable {
     {
         ATTACK.setOnAction(e->{
                 ATKflag=true;
-                WATKflag=true;
-                range(mwx,mwy,1);
-                mywac=false;
+                if(mywac==true) {
+                    range(mwx, mwy, 1);
+                    mywac = false;
+                    WATKflag=true;
+                }
+                else if(myaac==true)
+                {
+                   range(max,may,2);
+                   myaac=false;
+                   AATKflag=true;
+                }
         });
         WAIT.setOnAction(e->{
             ATTACK.setDisable(true);
             WAIT.setDisable(true);
-            mywac=false;
-            GAN(mwx,mwy,1," ");
+            if(mywac==true) {
+                mywac=false;
+                GAN(mwx, mwy, 1, " ");
+            }
+            if(myaac==true)
+            {
+                myaac=false;
+                GAN(max,may,1," ");
+            }
+            if(wturn==true)
+            {
+                GAN(mwx,mwy,0," ");
+            }
+            if (aturn==true)
+            {
+                GAN(max,may,0," ");
+            }
         });
     }
     public  void turn()
@@ -168,8 +205,10 @@ public class Controller implements Initializable {
             enwtrun=false;
             mywtrun=true;
             turnend.setDisable(false);
-            textclear(0);
-            textclear(mwx,mwy,1);
+            GAN(mwx,mwy,0," ");
+            GAN(max,may,0," ");
+            aturn=true;
+            wturn=true;
         });
     }
     public void atkenw()
@@ -177,49 +216,88 @@ public class Controller implements Initializable {
         if(WATKflag==true) {
             WATKflag = false;
             ewar.hp-=mwar.atk;
-            if(ewar.hp<=0) {
-                GAN(ewx,ewy,2," ");
-                ewx=0;ewy=0;
-                ewar.hp = 0;
-            }
-            client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
-            enwhp.setText(Integer.toString(ewar.hp));
-            if(ewar.hp==0)
-            {
-                client.winflag=true;
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                Alert alert = new Alert(Alert.AlertType.WARNING);
-                alert.setTitle("Gamemessage");
-                alert.setHeaderText("遊戲勝利");
-                alert.showAndWait();;
-                client.shotdown();
-            }
-            textclear(mwx,mwy,1);
+            whptoz();
+            range(mwx,mwy,1,1);
             ATTACK.setDisable(true);
             WAIT.setDisable(true);
             GAN(mwx,mwy,1," ");
         }
+        else if(AATKflag==true)
+        {
+            AATKflag=false;
+            ewar.hp-=marc.atk;
+            whptoz();
+            range(max,may,1,1);
+            ATTACK.setDisable(true);
+            WAIT.setDisable(true);
+            GAN(max,may,1," ");
+        }
+        if(wturn==true)
+        {
+            GAN(mwx,mwy,0," ");
+        }
+        if (aturn==true)
+        {
+            GAN(max,may,0," ");
+        }
+    }
+    public void whptoz()
+    {
+        if(ewar.hp<=0) {
+            GAN(ewx,ewy,2," ");
+            ewx=0;ewy=0;
+            ewar.hp = 0;
+        }
+        client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+        enwhp.setText(Integer.toString(ewar.hp));
+        if(ewar.hp==0)
+        {
+            client.winflag=true;
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Gamemessage");
+            alert.setHeaderText("遊戲勝利");
+            alert.showAndWait();;
+            client.shotdown();
+        }
     }
     public void range(int x,int y,int z)
     {
-        System.out.println("TTTT");
-        mwx=x; mwy=y;
         for (a = 1; a <= 10; a++) {
             for (b = 1; b <= 12; b++) {
-                if (mwx > a)
-                    c += mwx - a;
+                if (x > a)
+                    c += x - a;
                 else
-                    c += a - mwx;
-                if (mwy > b)
-                    c += mwy - b;
+                    c += a - x;
+                if (y > b)
+                    c += y - b;
                 else
-                    c += b-mwy;
+                    c += b-y;
                 if (c <= z)
                     GAN(a, b,0," ");
+                c = 0;
+            }
+        }
+    }
+    public void range(int x,int y,int z,int w)
+    {
+        System.out.println("TTTT");
+        for (a = 1; a <= 10; a++) {
+            for (b = 1; b <= 12; b++) {
+                if (x > a)
+                    c += x - a;
+                else
+                    c += a - x;
+                if (y > b)
+                    c += y - b;
+                else
+                    c += b-y;
+                if (c <= z)
+                    GAN(a, b,w," ");
                 c = 0;
             }
         }
@@ -261,26 +339,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT11.getText()=="我戰" && mywtrun==true && mywac==false)//equal("我戰") 若有空需替換
+            else if(BT11.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(1,1,2);
 
             }
+            else if(BT11.getText()=="我弓" && mywtrun==true & myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(1,1,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 1;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT11.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                    textclear(max,may,22);
+                    max = 1;
+                    may = 1;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT11.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT12.setOnAction(e->{
@@ -290,26 +390,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT12.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT12.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(1,2,2);
 
             }
+            else if(BT12.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(1,2,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 2;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT12.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 1;
+                    may = 2;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT12.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT13.setOnAction(e->{
@@ -319,26 +441,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT13.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT13.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(1,3,2);
 
             }
+            else if(BT13.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(1,3,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 3;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT13.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 1;
+                    may = 3;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT13.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT14.setOnAction(e->{
@@ -348,26 +492,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT14.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT14.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(1,4,2);
 
             }
+            else if(BT14.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(1,4,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 4;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT14.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 1;
+                    may = 4;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT14.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT15.setOnAction(e->{
@@ -377,26 +543,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT15.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT15.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(1,5,2);
 
             }
+            else if(BT15.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(1,5,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 5;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT15.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 1;
+                    may = 5;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT15.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT16.setOnAction(e->{
@@ -406,26 +594,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT16.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT16.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(1,6,2);
 
             }
+            else if(BT16.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(1,6,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 6;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT16.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 1;
+                    may = 6;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT16.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT17.setOnAction(e->{
@@ -435,26 +645,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT17.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT17.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(1,7,2);
 
             }
+            else if(BT17.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(1,7,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 7;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT17.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 1;
+                    may = 7;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT17.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT18.setOnAction(e->{
@@ -464,26 +696,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT18.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT18.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(1,8,2);
 
             }
+            else if(BT18.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(1,8,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 8;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT18.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 1;
+                    may = 8;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT18.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT19.setOnAction(e->{
@@ -493,26 +747,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT19.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT19.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(1,9,2);
 
             }
+            else if(BT19.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(1,9,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 9;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT19.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 1;
+                    may = 9;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT19.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT110.setOnAction(e->{
@@ -522,26 +798,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT110.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT110.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(1,10,2);
 
             }
+            else if(BT110.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(1,10,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 10;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT110.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 1;
+                    may = 10;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT110.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT111.setOnAction(e->{
@@ -551,26 +849,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT111.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT111.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(1,11,2);
 
             }
+            else if(BT111.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(1,11,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 11;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT111.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 1;
+                    may = 11;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT111.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT112.setOnAction(e->{
@@ -580,26 +900,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT112.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT112.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(1,12,2);
 
             }
+            else if(BT112.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(1,12,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 12;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT112.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 1;
+                    may = 12;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT112.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT21.setOnAction(e->{
@@ -609,26 +951,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT21.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT21.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(2,1,2);
 
             }
+            else if(BT21.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(2,1,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 1;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT21.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 2;
+                    may = 1;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT21.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT22.setOnAction(e->{
@@ -638,26 +1002,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT22.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT22.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(2,2,2);
 
             }
+            else if(BT22.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(2,2,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 2;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT22.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 2;
+                    may = 2;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT22.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT23.setOnAction(e->{
@@ -667,26 +1053,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT23.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT23.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(2,3,2);
 
             }
+            else if(BT23.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(2,3,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 3;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT23.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 2;
+                    may = 3;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT23.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT24.setOnAction(e->{
@@ -696,26 +1104,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT24.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT24.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(2,4,2);
 
             }
+            else if(BT24.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(2,4,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 4;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT24.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+ wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 2;
+                    may = 4;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT24.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT25.setOnAction(e->{
@@ -725,26 +1155,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT25.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT25.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(2,5,2);
 
             }
+            else if(BT25.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(2,5,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 5;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT25.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 2;
+                    may = 5;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT25.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT26.setOnAction(e->{
@@ -754,26 +1206,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT26.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT26.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(2,6,2);
 
             }
+            else if(BT26.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(2,6,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 6;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT26.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 2;
+                    may = 6;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT26.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT27.setOnAction(e->{
@@ -783,26 +1257,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT27.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT27.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(2,7,2);
 
             }
+            else if(BT27.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(2,7,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 7;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT27.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 2;
+                    may = 7;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT27.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT28.setOnAction(e->{
@@ -812,26 +1308,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT28.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT28.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(2,8,2);
 
             }
+            else if(BT28.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(2,8,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 8;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT28.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 2;
+                    may = 8;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT28.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT29.setOnAction(e->{
@@ -841,26 +1359,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT29.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT29.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(2,9,2);
 
             }
+            else if(BT29.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(2,9,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 9;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT29.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 2;
+                    may = 9;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT29.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT210.setOnAction(e->{
@@ -870,26 +1410,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT210.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT210.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(2,10,2);
 
             }
+            else if(BT210.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(2,10,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 10;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT210.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 2;
+                    may = 10;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT210.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT211.setOnAction(e->{
@@ -899,26 +1461,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT211.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT211.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(2,11,2);
 
             }
+            else if(BT211.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(2,11,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 11;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT211.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 2;
+                    may = 11;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT211.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT212.setOnAction(e->{
@@ -928,26 +1512,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT212.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT212.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(2,12,2);
 
             }
+            else if(BT212.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(2,12,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 12;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT212.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 2;
+                    may = 12;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT212.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT31.setOnAction(e->{
@@ -957,26 +1563,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT31.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT31.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(3,1,2);
 
             }
+            else if(BT31.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(3,1,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 1;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT31.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 3;
+                    may = 1;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT31.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT32.setOnAction(e->{
@@ -986,26 +1614,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT32.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT32.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(3,2,2);
 
             }
+            else if(BT32.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(3,2,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 2;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT32.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 3;
+                    may = 2;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT32.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT33.setOnAction(e->{
@@ -1015,26 +1665,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT33.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT33.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(3,3,2);
 
             }
+            else if(BT33.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(3,3,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 3;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT33.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 3;
+                    may = 3;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT33.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT34.setOnAction(e->{
@@ -1044,26 +1716,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT34.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT34.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(3,4,2);
 
             }
+            else if(BT34.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(3,4,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 4;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT34.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 3;
+                    may = 4;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT34.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT35.setOnAction(e->{
@@ -1073,26 +1767,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT35.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT35.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(3,5,2);
 
             }
+            else if(BT35.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(3,5,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 5;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT35.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 3;
+                    may = 5;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT35.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT36.setOnAction(e->{
@@ -1102,26 +1818,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT36.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT36.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(3,6,2);
 
             }
+            else if(BT36.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(3,6,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 6;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT36.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 3;
+                    may = 6;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT36.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT37.setOnAction(e->{
@@ -1131,26 +1869,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT37.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT37.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(3,7,2);
 
             }
+            else if(BT37.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(3,7,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 7;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT37.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 3;
+                    may = 7;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT37.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT38.setOnAction(e->{
@@ -1160,26 +1920,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT38.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT38.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(3,8,2);
 
             }
+            else if(BT38.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(3,8,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 8;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT38.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 3;
+                    may = 8;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT38.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT39.setOnAction(e->{
@@ -1189,26 +1971,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT39.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT39.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(3,9,2);
 
             }
+            else if(BT39.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(3,9,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 9;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT39.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 3;
+                    may = 9;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT39.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT310.setOnAction(e->{
@@ -1218,26 +2022,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT310.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT310.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(3,10,2);
 
             }
+            else if(BT310.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(3,10,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 10;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT310.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 3;
+                    may = 10;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT310.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT311.setOnAction(e->{
@@ -1247,26 +2073,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT311.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT311.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(3,11,2);
 
             }
+            else if(BT311.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(3,11,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 11;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT311.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 3;
+                    may = 11;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT311.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT312.setOnAction(e->{
@@ -1276,26 +2124,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT312.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT312.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(3,12,2);
 
             }
+            else if(BT312.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(3,12,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 12;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT312.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 3;
+                    may = 12;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT312.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT41.setOnAction(e->{
@@ -1305,26 +2175,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT41.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT41.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(4,1,2);
 
             }
+            else if(BT41.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(4,1,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 1;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT41.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 4;
+                    may = 1;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT41.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT42.setOnAction(e->{
@@ -1334,26 +2226,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT42.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT42.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(4,2,2);
 
             }
+            else if(BT42.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(4,2,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 2;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT42.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 4;
+                    may = 2;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT42.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT43.setOnAction(e->{
@@ -1363,26 +2277,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT43.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT43.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(4,3,2);
 
             }
+            else if(BT43.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(4,3,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 3;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT43.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 4;
+                    may = 3;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT43.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT44.setOnAction(e->{
@@ -1392,26 +2328,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT44.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT44.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(4,4,2);
 
             }
+            else if(BT44.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(4,4,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 4;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT44.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 4;
+                    may = 4;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT44.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT45.setOnAction(e->{
@@ -1421,26 +2379,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT45.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT45.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(4,5,2);
 
             }
+            else if(BT45.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(4,5,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 5;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT45.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 4;
+                    may = 5;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT45.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT46.setOnAction(e->{
@@ -1450,26 +2430,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT46.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT46.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(4,6,2);
 
             }
+            else if(BT46.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(4,6,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 6;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT46.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 4;
+                    may = 6;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT46.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT47.setOnAction(e->{
@@ -1479,26 +2481,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT47.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT47.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(4,7,2);
 
             }
+            else if(BT47.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(4,7,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 7;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT47.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 4;
+                    may = 7;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT47.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT48.setOnAction(e->{
@@ -1508,26 +2532,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT48.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT48.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(4,8,2);
 
             }
+            else if(BT48.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(4,8,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 8;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT48.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 4;
+                    may = 8;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT48.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT49.setOnAction(e->{
@@ -1537,26 +2583,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT49.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT49.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(4,9,2);
 
             }
+            else if(BT49.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(4,9,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 9;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT49.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 4;
+                    may = 9;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT49.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT410.setOnAction(e->{
@@ -1566,26 +2634,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT410.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT410.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(4,10,2);
 
             }
+            else if(BT410.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(4,10,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 10;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT410.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 4;
+                    may = 10;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT410.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT411.setOnAction(e->{
@@ -1595,26 +2685,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT411.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT411.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(4,11,2);
 
             }
+            else if(BT411.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(4,11,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 11;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT411.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 4;
+                    may = 11;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT411.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT412.setOnAction(e->{
@@ -1624,26 +2736,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT412.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT412.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(4,12,2);
 
             }
+            else if(BT412.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(4,12,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 12;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT412.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 4;
+                    may = 12;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT412.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT51.setOnAction(e->{
@@ -1653,26 +2787,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT51.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT51.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(5,1,2);
 
             }
+            else if(BT51.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(5,1,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 1;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT51.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 5;
+                    may = 1;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT51.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT52.setOnAction(e->{
@@ -1682,26 +2838,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT52.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT52.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(5,2,2);
 
             }
+            else if(BT52.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(5,2,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 2;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT52.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 5;
+                    may = 2;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT52.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT53.setOnAction(e->{
@@ -1711,26 +2889,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT53.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT53.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(5,3,2);
 
             }
+            else if(BT53.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(5,3,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 3;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT53.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 5;
+                    may = 3;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT53.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT54.setOnAction(e->{
@@ -1740,26 +2940,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT54.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT54.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(5,4,2);
 
             }
+            else if(BT54.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(5,4,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 4;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT54.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 5;
+                    may = 4;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT54.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT55.setOnAction(e->{
@@ -1769,26 +2991,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT55.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT55.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(5,5,2);
 
             }
+            else if(BT55.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(5,5,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 5;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT55.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 5;
+                    may = 5;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT55.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT56.setOnAction(e->{
@@ -1798,26 +3042,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT56.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT56.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(5,6,2);
 
             }
+            else if(BT56.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(5,6,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 6;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT56.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 5;
+                    may = 6;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT56.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT57.setOnAction(e->{
@@ -1827,26 +3093,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT57.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT57.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(5,7,2);
 
             }
+            else if(BT57.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(5,7,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 7;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT57.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 5;
+                    may = 7;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT57.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT58.setOnAction(e->{
@@ -1856,26 +3144,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT58.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT58.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(5,8,2);
 
             }
+            else if(BT58.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(5,8,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 8;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT58.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 5;
+                    may = 8;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT58.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT59.setOnAction(e->{
@@ -1885,26 +3195,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT59.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT59.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(5,9,2);
 
             }
+            else if(BT59.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(5,9,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 9;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT59.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 5;
+                    may = 9;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT59.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT510.setOnAction(e->{
@@ -1914,26 +3246,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT510.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT510.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(5,10,2);
 
             }
+            else if(BT510.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(5,10,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 10;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT510.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 5;
+                    may = 10;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT510.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT511.setOnAction(e->{
@@ -1943,26 +3297,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT511.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT511.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(5,11,2);
 
             }
+            else if(BT511.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(5,11,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 11;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT511.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 5;
+                    may = 11;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT511.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT512.setOnAction(e->{
@@ -1972,26 +3348,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT512.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT512.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(5,12,2);
 
             }
+            else if(BT512.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(5,12,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 12;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT512.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 5;
+                    may = 12;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT512.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT61.setOnAction(e->{
@@ -2001,26 +3399,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT61.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT61.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(6,1,2);
 
             }
+            else if(BT61.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(6,1,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 1;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT61.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 6;
+                    may = 1;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT61.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT62.setOnAction(e->{
@@ -2030,26 +3450,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT62.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT62.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(6,2,2);
 
             }
+            else if(BT62.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(6,2,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 2;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT62.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+ wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 6;
+                    may = 2;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT62.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT63.setOnAction(e->{
@@ -2059,26 +3501,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT63.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT63.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(6,3,2);
 
             }
+            else if(BT63.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(6,3,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 3;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT63.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 6;
+                    may = 3;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT63.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT64.setOnAction(e->{
@@ -2088,26 +3552,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT64.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT64.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(6,4,2);
 
             }
+            else if(BT64.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(6,4,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 4;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT64.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 6;
+                    may = 4;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT64.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT65.setOnAction(e->{
@@ -2117,26 +3603,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT65.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT65.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(6,5,2);
 
             }
+            else if(BT65.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(6,5,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 5;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT65.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 6;
+                    may = 5;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT65.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT66.setOnAction(e->{
@@ -2146,26 +3654,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT66.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT66.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(6,6,2);
 
             }
+            else if(BT66.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(6,6,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 6;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT66.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 6;
+                    may = 6;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT66.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT67.setOnAction(e->{
@@ -2175,26 +3705,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT67.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT67.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(6,7,2);
 
             }
+            else if(BT67.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(6,7,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 7;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT67.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 6;
+                    may = 7;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT67.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT68.setOnAction(e->{
@@ -2204,26 +3756,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT68.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT68.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(6,8,2);
 
             }
+            else if(BT68.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(6,8,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 8;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT68.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 6;
+                    may = 8;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT68.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT69.setOnAction(e->{
@@ -2233,26 +3807,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT69.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT69.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(6,9,2);
 
             }
+            else if(BT69.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(6,9,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 9;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT69.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 6;
+                    may = 9;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT69.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT610.setOnAction(e->{
@@ -2262,26 +3858,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT610.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT610.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(6,10,2);
 
             }
+            else if(BT610.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(6,10,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 10;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT610.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 6;
+                    may = 10;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT610.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT611.setOnAction(e->{
@@ -2291,26 +3909,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT611.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT611.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(6,11,2);
 
             }
+            else if(BT611.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(6,11,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 11;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT611.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 6;
+                    may = 11;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT611.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT612.setOnAction(e->{
@@ -2320,26 +3960,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT612.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT612.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(6,12,2);
 
             }
+            else if(BT612.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(6,12,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 12;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT612.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 6;
+                    may = 12;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT612.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT71.setOnAction(e->{
@@ -2349,26 +4011,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT71.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT71.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(7,1,2);
 
             }
+            else if(BT71.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(7,1,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 1;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT71.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 7;
+                    may = 1;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT71.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT72.setOnAction(e->{
@@ -2378,26 +4062,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT72.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT72.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(7,2,2);
 
             }
+            else if(BT72.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(7,2,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 2;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT72.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 7;
+                    may = 2;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT72.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT73.setOnAction(e->{
@@ -2407,26 +4113,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT73.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT73.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(7,3,2);
 
             }
+            else if(BT73.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(7,3,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 3;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT73.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 7;
+                    may = 3;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT73.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT74.setOnAction(e->{
@@ -2436,26 +4164,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT74.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT74.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(7,4,2);
 
             }
+            else if(BT74.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(7,4,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 4;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT74.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 7;
+                    may = 4;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT74.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT75.setOnAction(e->{
@@ -2465,26 +4215,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT75.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT75.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(7,5,2);
 
             }
+            else if(BT75.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(7,5,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 5;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT75.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+ wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 7;
+                    may = 5;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT75.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT76.setOnAction(e->{
@@ -2494,26 +4266,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT76.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT76.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(7,6,2);
 
             }
+            else if(BT76.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(7,6,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 6;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT76.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 7;
+                    may = 6;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT76.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT77.setOnAction(e->{
@@ -2523,26 +4317,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT77.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT77.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(7,7,2);
 
             }
+            else if(BT77.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(7,7,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 7;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT77.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 7;
+                    may = 7;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT77.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT78.setOnAction(e->{
@@ -2552,26 +4368,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT78.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT78.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(7,8,2);
 
             }
+            else if(BT78.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(7,8,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 8;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT78.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 7;
+                    may = 8;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT78.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT79.setOnAction(e->{
@@ -2581,26 +4419,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT79.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT79.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(7,9,2);
 
             }
+            else if(BT79.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(7,9,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 9;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT79.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 7;
+                    may = 9;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT79.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT710.setOnAction(e->{
@@ -2610,26 +4470,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT710.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT710.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(7,10,2);
 
             }
+            else if(BT710.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(7,10,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 10;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT710.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 7;
+                    may = 10;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT710.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT711.setOnAction(e->{
@@ -2639,26 +4521,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT711.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT711.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(7,11,2);
 
             }
+            else if(BT711.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(7,11,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 11;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT711.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 7;
+                    may = 11;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT711.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT712.setOnAction(e->{
@@ -2668,26 +4572,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT712.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT712.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(7,12,2);
 
             }
+            else if(BT712.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(7,12,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 12;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT712.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 7;
+                    may = 12;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT712.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT81.setOnAction(e->{
@@ -2697,26 +4623,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT81.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT81.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(8,1,2);
 
             }
+            else if(BT81.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(8,1,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 1;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT81.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 8;
+                    may = 1;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT81.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT82.setOnAction(e->{
@@ -2726,26 +4674,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT82.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT82.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(8,2,2);
 
             }
+            else if(BT82.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(8,2,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 2;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT82.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 8;
+                    may = 2;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT82.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT83.setOnAction(e->{
@@ -2755,26 +4725,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT83.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT83.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(8,3,2);
 
             }
+            else if(BT83.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(8,3,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 3;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT83.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 8;
+                    may = 3;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT83.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT84.setOnAction(e->{
@@ -2784,26 +4776,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT84.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT84.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(8,4,2);
 
             }
+            else if(BT84.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(8,4,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 4;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT84.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 8;
+                    may = 4;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT84.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT85.setOnAction(e->{
@@ -2813,26 +4827,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT85.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT85.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(8,5,2);
 
             }
+            else if(BT85.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(8,5,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 5;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT85.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 8;
+                    may = 5;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT85.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT86.setOnAction(e->{
@@ -2842,26 +4878,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT86.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT86.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(8,6,2);
 
             }
+            else if(BT86.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(8,6,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 6;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT86.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 8;
+                    may = 6;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT86.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT87.setOnAction(e->{
@@ -2871,26 +4929,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT87.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT87.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(8,7,2);
 
             }
+            else if(BT87.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(8,7,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 7;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT87.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 8;
+                    may = 7;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT87.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT88.setOnAction(e->{
@@ -2900,26 +4980,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT88.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT88.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(8,8,2);
 
             }
+            else if(BT88.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(8,8,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 8;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT88.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+ wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 8;
+                    may = 8;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT88.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT89.setOnAction(e->{
@@ -2929,26 +5031,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT89.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT89.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(8,9,2);
 
             }
+            else if(BT89.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(8,9,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 9;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT89.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+ wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 8;
+                    may = 9;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT89.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT810.setOnAction(e->{
@@ -2958,26 +5082,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT810.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT810.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(8,10,2);
 
             }
+            else if(BT810.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(8,10,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 10;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT810.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 8;
+                    may = 10;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT810.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT811.setOnAction(e->{
@@ -2987,26 +5133,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT811.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT811.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(8,11,2);
 
             }
+            else if(BT811.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(8,11,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 11;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT811.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 8;
+                    may = 11;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT811.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT812.setOnAction(e->{
@@ -3016,26 +5184,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT812.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT812.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(8,12,2);
 
             }
+            else if(BT812.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(8,12,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 12;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT812.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 8;
+                    may = 12;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT812.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT91.setOnAction(e->{
@@ -3045,26 +5235,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT91.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT91.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(9,1,2);
 
             }
+            else if(BT91.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(9,1,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 1;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT91.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 9;
+                    may = 1;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT91.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT92.setOnAction(e->{
@@ -3074,26 +5286,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT92.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT92.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(9,2,2);
 
             }
+            else if(BT92.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(9,2,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 2;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT92.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 9;
+                    may = 2;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT92.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT93.setOnAction(e->{
@@ -3103,26 +5337,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT93.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT93.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(9,3,2);
 
             }
+            else if(BT93.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(9,3,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 3;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT93.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 9;
+                    may = 3;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT93.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT94.setOnAction(e->{
@@ -3132,26 +5388,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT94.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT94.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(9,4,2);
 
             }
+            else if(BT94.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(9,4,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 4;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT94.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 9;
+                    may = 4;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT94.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT95.setOnAction(e->{
@@ -3161,26 +5439,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT95.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT95.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(9,5,2);
 
             }
+            else if(BT95.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(9,5,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 5;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT95.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 9;
+                    may = 5;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT95.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT96.setOnAction(e->{
@@ -3190,26 +5490,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT96.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT96.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(9,6,2);
 
             }
+            else if(BT96.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(9,6,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 6;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT96.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 9;
+                    may = 6;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT96.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT97.setOnAction(e->{
@@ -3219,26 +5541,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT97.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT97.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(9,7,2);
 
             }
+            else if(BT97.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(9,7,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 7;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT97.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 9;
+                    may = 7;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT97.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT98.setOnAction(e->{
@@ -3248,26 +5592,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT98.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT98.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(9,8,2);
 
             }
+            else if(BT98.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(9,8,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 8;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT98.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 9;
+                    may = 8;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT98.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT99.setOnAction(e->{
@@ -3277,26 +5643,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT99.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT99.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(9,9,2);
 
             }
+            else if(BT99.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(9,9,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 9;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT99.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 9;
+                    may = 9;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT99.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT910.setOnAction(e->{
@@ -3306,26 +5694,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT910.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT910.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(9,10,2);
 
             }
+            else if(BT910.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(9,10,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 10;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT910.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 9;
+                    may = 10;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT910.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT911.setOnAction(e->{
@@ -3335,26 +5745,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT911.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT911.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(9,11,2);
 
             }
+            else if(BT911.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(9,11,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 11;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT911.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 9;
+                    may = 11;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT911.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT912.setOnAction(e->{
@@ -3364,26 +5796,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT912.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT912.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(9,12,2);
 
             }
+            else if(BT912.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(9,12,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 12;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT912.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 9;
+                    may = 12;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT912.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT101.setOnAction(e->{
@@ -3393,26 +5847,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT101.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT101.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(10,1,2);
 
             }
+            else if(BT101.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(10,1,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 1;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT101.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 10;
+                    may = 1;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT101.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT102.setOnAction(e->{
@@ -3422,26 +5898,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT102.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT102.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(10,2,2);
 
             }
+            else if(BT102.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(10,2,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 2;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT102.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 10;
+                    may = 2;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT102.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT103.setOnAction(e->{
@@ -3451,26 +5949,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT103.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT103.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(10,3,2);
 
             }
+            else if(BT103.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(10,3,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 3;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT103.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 10;
+                    may = 3;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT103.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT104.setOnAction(e->{
@@ -3480,26 +6000,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT104.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT104.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(10,4,2);
 
             }
+            else if(BT104.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(10,4,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 4;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT104.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 10;
+                    may = 4;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT104.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT105.setOnAction(e->{
@@ -3509,26 +6051,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT105.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT105.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(10,5,2);
 
             }
+            else if(BT105.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(10,5,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 5;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT105.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+ wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 10;
+                    may = 5;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT105.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT106.setOnAction(e->{
@@ -3538,26 +6102,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT106.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT106.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(10,6,2);
 
             }
+            else if(BT106.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(10,6,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 6;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT106.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 10;
+                    may = 6;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT106.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT107.setOnAction(e->{
@@ -3567,26 +6153,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT107.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT107.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(10,7,2);
 
             }
+            else if(BT107.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(10,7,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 7;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT107.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 10;
+                    may = 7;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT107.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT108.setOnAction(e->{
@@ -3596,26 +6204,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT108.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT108.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(10,8,2);
 
             }
+            else if(BT108.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(10,8,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 8;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT108.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 10;
+                    may = 8;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT108.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT109.setOnAction(e->{
@@ -3625,26 +6255,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT109.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT109.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(10,9,2);
 
             }
+            else if(BT109.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(10,9,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 9;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT109.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 10;
+                    may = 9;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT109.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT1010.setOnAction(e->{
@@ -3654,26 +6306,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT1010.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT1010.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(10,10,2);
 
             }
+            else if(BT1010.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(10,10,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 10;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT1010.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 10;
+                    may = 10;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT1010.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT1011.setOnAction(e->{
@@ -3683,26 +6357,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT1011.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT1011.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(10,11,2);
 
             }
+            else if(BT1011.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(10,11,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 11;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT1011.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 10;
+                    may = 11;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT1011.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
         BT1012.setOnAction(e->{
@@ -3712,26 +6408,48 @@ public class Controller implements Initializable {
                 atkenw();
                 client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
             }
-            else if(BT1012.getText()=="我戰" && mywtrun==true && mywac==false)
+            else if(BT1012.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
             {
                 mywac=true;
                 range(10,12,2);
 
             }
+            else if(BT1012.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            {
+                myaac=true;
+                range(10,12,2);
+
+            }
+
             else
             {
                 if(mywac==true) {
+                    range(mwx,mwy,2,1);
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 12;
                     client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
                     ATTACK.setDisable(false);
                     WAIT.setDisable(false);
-                    textclear(mwx,mwy,1);
                     BT1012.setText("我戰");
-                    mywac=false;
+                    GAN(mwx,mwy,1," ");
                     //mywtrun=false;
+                    wturn=false;
                 }
+                if(myaac==true)
+                {
+                    range(max,may,2,1);
+                     textclear(max,may,22);
+                    max = 10;
+                    may = 12;
+                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    ATTACK.setDisable(false);
+                    WAIT.setDisable(false);
+                    BT1012.setText("我弓");
+                    GAN(max,may,1," ");
+                    aturn=false;
+                }
+                turnea();
             }
         });
     }
