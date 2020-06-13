@@ -230,9 +230,6 @@ public class Controller implements Initializable {
                     range(max, may, marc.skillrange);
                     myaac = false;
                     AATKflag = true;
-                    System.out.println(marc.mp);
-                    myamp.setText(Integer.toString(marc.mp));
-                    System.out.println(marc.mp);
                  }
                 else
                 {
@@ -259,7 +256,6 @@ public class Controller implements Initializable {
                     range(mwx, mwy, mwar.skillrange);
                     mywac = false;
                     WATKflag = true;
-                    mywmp.setText(Integer.toString(mwar.mp));
                 }
                 else
                 {
@@ -307,6 +303,7 @@ public class Controller implements Initializable {
             GAN(max,may,0," ");
             aturn=true;
             wturn=true;
+            animationTimer.stop();
         });
     }
     public void atkenw()
@@ -370,6 +367,8 @@ public class Controller implements Initializable {
             earc.hp=0;
         }
         client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+        myamp.setText(Integer.toString(marc.mp));
+        mywmp.setText(Integer.toString(mwar.mp));
         enwhp.setText(Integer.toString(ewar.hp));
         enahp.setText(Integer.toString(earc.hp));
         if(ewar.hp==0 && earc.hp==0)
