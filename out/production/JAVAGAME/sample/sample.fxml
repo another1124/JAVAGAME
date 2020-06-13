@@ -129,11 +129,24 @@
       <Label text="--------------------------------------------------------------------------------------------------" GridPane.columnIndex="1" GridPane.columnSpan="10" GridPane.rowIndex="13" />
       <Button fx:id="testturn" disable="false" mnemonicParsing="false" prefHeight="30.0" prefWidth="80.0" text="敵回合結束" GridPane.columnIndex="11" GridPane.columnSpan="2" GridPane.rowIndex="2"/>
       <Button fx:id="ATTACK" disable="true" mnemonicParsing="false" prefHeight="30.0" prefWidth="80.0" text="攻擊" GridPane.columnIndex="2" GridPane.columnSpan="2" GridPane.rowIndex="14"/>
-      <Button fx:id="WAIT" disable="true" mnemonicParsing="false" prefHeight="30.0" prefWidth="80.0" text="待命" GridPane.columnIndex="5" GridPane.columnSpan="2" GridPane.rowIndex="14"/>
-      <Label text="我方戰士HP:" GridPane.columnIndex="11" GridPane.columnSpan="1" GridPane.rowIndex="9" />
+      <Button fx:id="SKILL" disable="true" mnemonicParsing="false" prefHeight="30.0" prefWidth="80.0" text="技能" GridPane.columnIndex="5" GridPane.columnSpan="2" GridPane.rowIndex="14"/>
+      <Button fx:id="WAIT" disable="true" mnemonicParsing="false" prefHeight="30.0" prefWidth="80.0" text="待命" GridPane.columnIndex="8" GridPane.columnSpan="2" GridPane.rowIndex="14"/>
+      <Label text="我方戰士HP:" GridPane.columnIndex="11" GridPane.columnSpan="1" GridPane.rowIndex="10" />
+      <Label text="我方戰士MP:" GridPane.columnIndex="13" GridPane.columnSpan="1" GridPane.rowIndex="10" />
+      <Label text="我方弓箭手HP:" GridPane.columnIndex="11" GridPane.columnSpan="1" GridPane.rowIndex="11" />
+      <Label text="我方弓箭手MP:" GridPane.columnIndex="13" GridPane.columnSpan="1" GridPane.rowIndex="11" />
       <Label text="敵方戰士HP:" GridPane.columnIndex="11" GridPane.columnSpan="1" GridPane.rowIndex="7" />
+      <Label text="敵方戰士MP:" GridPane.columnIndex="13" GridPane.columnSpan="1" GridPane.rowIndex="7" />
+      <Label text="敵方弓箭手HP:" GridPane.columnIndex="11" GridPane.columnSpan="1" GridPane.rowIndex="8" />
+      <Label text="敵方弓箭手MP:" GridPane.columnIndex="13" GridPane.columnSpan="1" GridPane.rowIndex="8" />
       <Label fx:id="enwhp" text="150" GridPane.columnIndex="12" GridPane.columnSpan="1" GridPane.rowIndex="7" />
-      <Label fx:id="mywhp" text="150" GridPane.columnIndex="12" GridPane.columnSpan="1" GridPane.rowIndex="9" />
+      <Label fx:id="enwmp" text="40" GridPane.columnIndex="14" GridPane.columnSpan="1" GridPane.rowIndex="7" />
+      <Label fx:id="enahp" text="100" GridPane.columnIndex="12" GridPane.columnSpan="1" GridPane.rowIndex="8" />
+      <Label fx:id="enamp" text="50" GridPane.columnIndex="14" GridPane.columnSpan="1" GridPane.rowIndex="8" />
+      <Label fx:id="mywhp" text="150" GridPane.columnIndex="12" GridPane.columnSpan="1" GridPane.rowIndex="10" />
+      <Label fx:id="mywmp" text="40" GridPane.columnIndex="14" GridPane.columnSpan="1" GridPane.rowIndex="10" />
+      <Label fx:id="myahp" text="100" GridPane.columnIndex="12" GridPane.columnSpan="1" GridPane.rowIndex="11" />
+      <Label fx:id="myamp" text="50" GridPane.columnIndex="14" GridPane.columnSpan="1" GridPane.rowIndex="11" />
 
    </children>
    <columnConstraints>

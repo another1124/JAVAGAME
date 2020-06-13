@@ -3,14 +3,19 @@ package sample;
 import javafx.animation.AnimationTimer;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import javax.naming.spi.InitialContextFactory;
+import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Watchable;
 import java.sql.*;
@@ -28,17 +33,27 @@ public class Controller implements Initializable {
     public Button BT81,BT82,BT83,BT84,BT85,BT86,BT87,BT88,BT89,BT810,BT811,BT812;
     public Button BT91,BT92,BT93,BT94,BT95,BT96,BT97,BT98,BT99,BT910,BT911,BT912;
     public Button BT101,BT102,BT103,BT104,BT105,BT106,BT107,BT108,BT109,BT1010,BT1011,BT1012;
-
+    public Button cancel;
     public Button turnend;
     public Button testturn;
     public Button ATTACK;
     public Button WAIT;
     public Label enwhp;
     public Label mywhp;
+    public Label enahp;
+    public Label myahp;
+    public Button SKILL;
+    public Label enwmp;
+    public Label enamp;
+    public Label mywmp;
+    public Label myamp;
+
+
     private client client=new client();
-    int mwx=6,mwy=10,ewx=6,ewy=3,dpc=1,max=7,may=10;
+    int mwx=6,mwy=10,ewx=6,ewy=3,dpc=1,max=7,may=10,eax=7,eay=3;
     int a,b,c=0,d=0;
-    boolean firstturn=true,test=false;
+    boolean skillwindow=false;
+    boolean firstturn=true,test=false,wdmg=false,admg=false;
     boolean mywtrun=true,mywac=false,myaac=false,enwtrun=false,wturn=true,aturn=true;
     boolean WATKflag=false,ATKflag=false,AATKflag=false;
     WAR mwar=new WAR();
@@ -51,16 +66,32 @@ public class Controller implements Initializable {
     private AnimationTimer animationTimer=new AnimationTimer() {
         @Override
         public void handle(long l) {
-
+            earc.hp=client.eahp;
+            enahp.setText(Integer.toString(earc.hp));
+            earc.mp=client.eamp;
+            enamp.setText(Integer.toString(earc.mp));
+            marc.hp=client.mahp;
+            myahp.setText(Integer.toString(marc.hp));
+            marc.mp=client.mamp;
+            myamp.setText(Integer.toString(marc.mp));
             ewar.hp = client.ewhp;
             enwhp.setText(Integer.toString(ewar.hp));
+            ewar.mp = client.ewmp;
+            enwmp.setText(Integer.toString(ewar.mp));
             mwar.hp = client.mwhp;
             mywhp.setText(Integer.toString(mwar.hp));
+            mwar.mp = client.mwmp;
+            mywmp.setText(Integer.toString(mwar.mp));
             //ewy=13-ewy;
             if(client.deathflag==true)
             {
                 GAN(mwx,mwy,2," ");
                 mwx=0;mwy=0;
+            }
+            if(client.deathflaga==true)
+            {
+                GAN(max,may,2," ");
+                max=0; may=0;
             }
             if(client.loseflag==true)
             {
@@ -71,11 +102,19 @@ public class Controller implements Initializable {
                 client.shotdown();
                 animationTimer.stop();
             }
-           // winlose();
-            GAN(ewx, ewy, 2, " ");
-            ewx = client.ewx;///GANNNNNNNNNNNNNNNN;
-            ewy = 13-client.ewy;
-            GAN(ewx, ewy, 2, "敵戰");
+            // winlose();
+            if(ewar.hp>0) {
+                GAN(ewx, ewy, 2, " ");
+                ewx = client.ewx;///GANNNNNNNNNNNNNNNN;
+                ewy = 13 - client.ewy;
+                GAN(ewx, ewy, 2, "敵戰");
+            }
+            if(earc.hp>0) {
+                GAN(eax, eay, 2, " ");
+                eax = client.eax;
+                eay = 13 - client.eay;
+                GAN(eax, eay, 2, "敵弓");
+            }
             if(client.mywtrun==true) {
                 enwtrun=false;
                 mywtrun=true;
@@ -90,25 +129,18 @@ public class Controller implements Initializable {
             }
         }
     };
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-
-
         boolean flag = false;
-        BT63.setText("敵戰");
-        BT610.setText("我戰");
-        BT710.setText("我弓");
-        BT73.setText("敵弓");
-        BT610.setDisable(false);
-        BT710.setDisable(false);
-        BT612.setText(" ");
-        //    mywor.setOnMouseClicked(e -> {
-        //  range(mwx,mwy);
-                /*mywor.setPadding(new Insets(0,0,0,30));
-                BT512.setDisable(true);
-                BT512.setDisable(false);*/
-        //    System.out.println("TEST");
-        //
+            System.out.println("WINDOW TEST");
+            BT63.setText("敵戰");
+            BT610.setText("我戰");
+            BT710.setText("我弓");
+            BT73.setText("敵弓");
+            BT610.setDisable(false);
+            BT710.setDisable(false);
+            BT612.setText(" ");
         client.start();
         try {
             Thread.sleep(3000);
@@ -119,8 +151,8 @@ public class Controller implements Initializable {
         OnAction();
         turn();
         ATK();
-        if (mywtrun) {//?????????????????????????????????????????
 
+        if (mywtrun) {//?????????????????????????????????????????
         }else
             end();
 
@@ -147,11 +179,13 @@ public class Controller implements Initializable {
         ATKflag=false;//??????
         WATKflag=false;
         ATTACK.setDisable(true);
+        SKILL.setDisable(true);
         WAIT.setDisable(true);
-        client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+        client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
         client.update(mywtrun);
         turnend.setDisable(true);
         ATTACK.setDisable(true);
+        SKILL.setDisable(true);
         WAIT.setDisable(true);
         textclear(1);
         turnend.setDisable(true);
@@ -160,22 +194,86 @@ public class Controller implements Initializable {
     public void ATK()
     {
         ATTACK.setOnAction(e->{
-                ATKflag=true;
-                if(mywac==true) {
-                    range(mwx, mwy, 1);
-                    mywac = false;
-                    WATKflag=true;
+            ATKflag=true;
+            if(mywac==true || WATKflag==true) {
+                range(mwx, mwy, 1);
+                mywac = false;
+                WATKflag=true;
+            }
+            else if(myaac==true || AATKflag==true)
+            {
+                range(max,may,2);
+                myaac=false;
+                AATKflag=true;
+            }
+        });
+        SKILL.setOnAction(e->
+        {
+            if(myaac==true || AATKflag==true) {
+                ChoiceDialog<String> choiceDialog = new ChoiceDialog(marc.skillarry[0]);
+                choiceDialog.setTitle("選取使用技能");
+                choiceDialog.setHeaderText("");
+                choiceDialog.setContentText("弓箭手技能");
+                choiceDialog.showAndWait();
+                marc.skilluse(choiceDialog.getResult());
+
+                if(marc.mp<0) {
+                Alert alert=new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("GAME MESSAGE");
+                alert.setHeaderText("");
+                alert.setContentText("MP不足");
+                alert.showAndWait();
+                marc.mp=marc.mpold;
                 }
-                else if(myaac==true)
+                else if(choiceDialog.getResult()!=null) {
+                    marc.atk = marc.skidmg;
+                    range(max, may, marc.skillrange);
+                    myaac = false;
+                    AATKflag = true;
+                    System.out.println(marc.mp);
+                    myamp.setText(Integer.toString(marc.mp));
+                    System.out.println(marc.mp);
+                 }
+                else
                 {
-                   range(max,may,2);
-                   myaac=false;
-                   AATKflag=true;
+                    marc.mp=marc.mpold;
                 }
+            }
+            else if(mywac==true || WATKflag==true) {
+                ChoiceDialog<String> choiceDialog = new ChoiceDialog(mwar.skillarry[0]);
+                choiceDialog.setTitle("選取使用技能");
+                choiceDialog.setHeaderText("");
+                choiceDialog.setContentText("戰士技能");
+                choiceDialog.showAndWait();
+                mwar.skilluse(choiceDialog.getResult());
+                if(mwar.mp<0) {
+                    Alert alert=new Alert(Alert.AlertType.WARNING);
+                    alert.setTitle("GAME MESSAGE");
+                    alert.setHeaderText("");
+                    alert.setContentText("MP不足");
+                    alert.showAndWait();
+                    mwar.mp=mwar.mpold;
+                }
+                else if(choiceDialog.getResult()!=null) {
+                    mwar.atk = mwar.skidmg;
+                    range(mwx, mwy, mwar.skillrange);
+                    mywac = false;
+                    WATKflag = true;
+                    mywmp.setText(Integer.toString(mwar.mp));
+                }
+                else
+                {
+                    mwar.mp=mwar.mpold;
+                }
+            }
         });
         WAIT.setOnAction(e->{
             ATTACK.setDisable(true);
+            SKILL.setDisable(true);
             WAIT.setDisable(true);
+            AATKflag=false;
+            WATKflag=false;
+            textclear(1);
             if(mywac==true) {
                 mywac=false;
                 GAN(mwx, mwy, 1, " ");
@@ -215,22 +313,39 @@ public class Controller implements Initializable {
     {
         if(WATKflag==true) {
             WATKflag = false;
-            ewar.hp-=mwar.atk;
+            if(wdmg)
+                ewar.hp-=mwar.atk;
+            else if(admg)
+                earc.hp-=mwar.atk;
             whptoz();
-            range(mwx,mwy,1,1);
+            //range(mwx,mwy,1,1);
+            textclear(1);
             ATTACK.setDisable(true);
+            SKILL.setDisable(true);
             WAIT.setDisable(true);
             GAN(mwx,mwy,1," ");
+            wdmg=false;
+            admg=false;
+            mwar.atk=20;
         }
         else if(AATKflag==true)
         {
+            System.out.println(marc.mp);
             AATKflag=false;
-            ewar.hp-=marc.atk;
+            if(wdmg)
+                ewar.hp-=marc.atk;
+            else if (admg)
+                earc.hp-=marc.atk;
             whptoz();
-            range(max,may,1,1);
+            //range(max,may,2,1);
+            textclear(1);
             ATTACK.setDisable(true);
+            SKILL.setDisable(true);
             WAIT.setDisable(true);
             GAN(max,may,1," ");
+            wdmg=false;
+            admg=false;
+            marc.atk=20;
         }
         if(wturn==true)
         {
@@ -248,9 +363,16 @@ public class Controller implements Initializable {
             ewx=0;ewy=0;
             ewar.hp = 0;
         }
-        client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+        if(earc.hp<=0)
+        {
+            GAN(eax,eay,2," ");
+            eax=0;eay=0;
+            earc.hp=0;
+        }
+        client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
         enwhp.setText(Integer.toString(ewar.hp));
-        if(ewar.hp==0)
+        enahp.setText(Integer.toString(earc.hp));
+        if(ewar.hp==0 && earc.hp==0)
         {
             client.winflag=true;
             try {
@@ -263,6 +385,7 @@ public class Controller implements Initializable {
             alert.setHeaderText("遊戲勝利");
             alert.showAndWait();;
             client.shotdown();
+
         }
     }
     public void range(int x,int y,int z)
@@ -285,7 +408,6 @@ public class Controller implements Initializable {
     }
     public void range(int x,int y,int z,int w)
     {
-        System.out.println("TTTT");
         for (a = 1; a <= 10; a++) {
             for (b = 1; b <= 12; b++) {
                 if (x > a)
@@ -336,16 +458,23 @@ public class Controller implements Initializable {
             //ssss2
             if(BT11.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT11.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT11.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT11.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(1,1,2);
 
             }
-            else if(BT11.getText()=="我弓" && mywtrun==true & myaac==false && aturn==true)
+            else if(BT11.getText()=="我弓" && mywtrun==true & myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(1,1,2);
@@ -359,8 +488,9 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 1;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT11.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -373,8 +503,9 @@ public class Controller implements Initializable {
                     textclear(max,may,22);
                     max = 1;
                     may = 1;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT11.setText("我弓");
                     GAN(max,may,1," ");
@@ -387,16 +518,23 @@ public class Controller implements Initializable {
             //ssss2
             if(BT12.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT12.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT12.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT12.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(1,2,2);
 
             }
-            else if(BT12.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT12.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(1,2,2);
@@ -410,8 +548,9 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 2;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT12.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -421,11 +560,12 @@ public class Controller implements Initializable {
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 1;
                     may = 2;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT12.setText("我弓");
                     GAN(max,may,1," ");
@@ -438,16 +578,23 @@ public class Controller implements Initializable {
             //ssss2
             if(BT13.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT13.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT13.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT13.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(1,3,2);
 
             }
-            else if(BT13.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT13.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(1,3,2);
@@ -461,8 +608,9 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 3;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT13.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -472,11 +620,12 @@ public class Controller implements Initializable {
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 1;
                     may = 3;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT13.setText("我弓");
                     GAN(max,may,1," ");
@@ -489,16 +638,23 @@ public class Controller implements Initializable {
             //ssss2
             if(BT14.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT14.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT14.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT14.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(1,4,2);
 
             }
-            else if(BT14.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT14.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(1,4,2);
@@ -512,8 +668,9 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 4;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT14.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -523,11 +680,12 @@ public class Controller implements Initializable {
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 1;
                     may = 4;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT14.setText("我弓");
                     GAN(max,may,1," ");
@@ -540,16 +698,23 @@ public class Controller implements Initializable {
             //ssss2
             if(BT15.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT15.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT15.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT15.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(1,5,2);
 
             }
-            else if(BT15.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT15.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(1,5,2);
@@ -563,8 +728,9 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 5;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT15.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -574,11 +740,12 @@ public class Controller implements Initializable {
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 1;
                     may = 5;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT15.setText("我弓");
                     GAN(max,may,1," ");
@@ -591,16 +758,23 @@ public class Controller implements Initializable {
             //ssss2
             if(BT16.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT16.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT16.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT16.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(1,6,2);
 
             }
-            else if(BT16.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT16.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(1,6,2);
@@ -614,8 +788,9 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 6;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT16.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -625,11 +800,12 @@ public class Controller implements Initializable {
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 1;
                     may = 6;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT16.setText("我弓");
                     GAN(max,may,1," ");
@@ -642,16 +818,23 @@ public class Controller implements Initializable {
             //ssss2
             if(BT17.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT17.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT17.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT17.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(1,7,2);
 
             }
-            else if(BT17.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT17.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(1,7,2);
@@ -665,8 +848,9 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 7;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT17.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -676,11 +860,12 @@ public class Controller implements Initializable {
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 1;
                     may = 7;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT17.setText("我弓");
                     GAN(max,may,1," ");
@@ -693,16 +878,23 @@ public class Controller implements Initializable {
             //ssss2
             if(BT18.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT18.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT18.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT18.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(1,8,2);
 
             }
-            else if(BT18.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT18.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(1,8,2);
@@ -716,8 +908,9 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 8;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT18.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -727,11 +920,12 @@ public class Controller implements Initializable {
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 1;
                     may = 8;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT18.setText("我弓");
                     GAN(max,may,1," ");
@@ -744,16 +938,23 @@ public class Controller implements Initializable {
             //ssss2
             if(BT19.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT19.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT19.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT19.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(1,9,2);
 
             }
-            else if(BT19.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT19.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(1,9,2);
@@ -767,8 +968,9 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 9;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT19.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -778,11 +980,12 @@ public class Controller implements Initializable {
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 1;
                     may = 9;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT19.setText("我弓");
                     GAN(max,may,1," ");
@@ -795,16 +998,23 @@ public class Controller implements Initializable {
             //ssss2
             if(BT110.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT110.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT110.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT110.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(1,10,2);
 
             }
-            else if(BT110.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT110.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(1,10,2);
@@ -818,8 +1028,9 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 10;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT110.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -829,11 +1040,12 @@ public class Controller implements Initializable {
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 1;
                     may = 10;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT110.setText("我弓");
                     GAN(max,may,1," ");
@@ -846,16 +1058,23 @@ public class Controller implements Initializable {
             //ssss2
             if(BT111.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT111.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT111.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT111.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(1,11,2);
 
             }
-            else if(BT111.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT111.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(1,11,2);
@@ -869,8 +1088,9 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 11;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT111.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -880,11 +1100,12 @@ public class Controller implements Initializable {
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 1;
                     may = 11;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT111.setText("我弓");
                     GAN(max,may,1," ");
@@ -897,16 +1118,23 @@ public class Controller implements Initializable {
             //ssss2
             if(BT112.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT112.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT112.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT112.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(1,12,2);
 
             }
-            else if(BT112.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT112.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(1,12,2);
@@ -920,8 +1148,9 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 1;
                     mwy = 12;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT112.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -931,11 +1160,12 @@ public class Controller implements Initializable {
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 1;
                     may = 12;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT112.setText("我弓");
                     GAN(max,may,1," ");
@@ -948,16 +1178,23 @@ public class Controller implements Initializable {
             //ssss2
             if(BT21.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT21.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT21.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT21.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(2,1,2);
 
             }
-            else if(BT21.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT21.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(2,1,2);
@@ -971,8 +1208,9 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 1;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT21.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -982,11 +1220,12 @@ public class Controller implements Initializable {
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 2;
                     may = 1;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT21.setText("我弓");
                     GAN(max,may,1," ");
@@ -999,16 +1238,23 @@ public class Controller implements Initializable {
             //ssss2
             if(BT22.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT22.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT22.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT22.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(2,2,2);
 
             }
-            else if(BT22.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT22.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(2,2,2);
@@ -1022,8 +1268,9 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 2;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT22.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -1033,11 +1280,12 @@ public class Controller implements Initializable {
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 2;
                     may = 2;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT22.setText("我弓");
                     GAN(max,may,1," ");
@@ -1050,16 +1298,23 @@ public class Controller implements Initializable {
             //ssss2
             if(BT23.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT23.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT23.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT23.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(2,3,2);
 
             }
-            else if(BT23.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT23.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(2,3,2);
@@ -1073,8 +1328,9 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 3;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT23.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -1084,11 +1340,12 @@ public class Controller implements Initializable {
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 2;
                     may = 3;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT23.setText("我弓");
                     GAN(max,may,1," ");
@@ -1101,16 +1358,23 @@ public class Controller implements Initializable {
             //ssss2
             if(BT24.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT24.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT24.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT24.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(2,4,2);
 
             }
-            else if(BT24.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT24.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(2,4,2);
@@ -1124,22 +1388,24 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 4;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT24.setText("我戰");
                     GAN(mwx,mwy,1," ");
                     //mywtrun=false;
- wturn=false;
+                    wturn=false;
                 }
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 2;
                     may = 4;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT24.setText("我弓");
                     GAN(max,may,1," ");
@@ -1152,16 +1418,23 @@ public class Controller implements Initializable {
             //ssss2
             if(BT25.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT25.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT25.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT25.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(2,5,2);
 
             }
-            else if(BT25.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT25.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(2,5,2);
@@ -1175,8 +1448,9 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 5;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT25.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -1186,11 +1460,12 @@ public class Controller implements Initializable {
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 2;
                     may = 5;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT25.setText("我弓");
                     GAN(max,may,1," ");
@@ -1203,16 +1478,23 @@ public class Controller implements Initializable {
             //ssss2
             if(BT26.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT26.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT26.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT26.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(2,6,2);
 
             }
-            else if(BT26.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT26.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(2,6,2);
@@ -1226,8 +1508,9 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 6;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT26.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -1237,11 +1520,12 @@ public class Controller implements Initializable {
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 2;
                     may = 6;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT26.setText("我弓");
                     GAN(max,may,1," ");
@@ -1254,16 +1538,23 @@ public class Controller implements Initializable {
             //ssss2
             if(BT27.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT27.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT27.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT27.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(2,7,2);
 
             }
-            else if(BT27.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT27.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(2,7,2);
@@ -1277,22 +1568,24 @@ public class Controller implements Initializable {
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 7;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT27.setText("我戰");
                     GAN(mwx,mwy,1," ");
                     //mywtrun=false;
-wturn=false;
+                    wturn=false;
                 }
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 2;
                     may = 7;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT27.setText("我弓");
                     GAN(max,may,1," ");
@@ -1305,16 +1598,23 @@ wturn=false;
             //ssss2
             if(BT28.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT28.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT28.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT28.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(2,8,2);
 
             }
-            else if(BT28.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT28.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(2,8,2);
@@ -1328,8 +1628,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 8;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT28.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -1339,11 +1640,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 2;
                     may = 8;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT28.setText("我弓");
                     GAN(max,may,1," ");
@@ -1356,16 +1658,23 @@ wturn=false;
             //ssss2
             if(BT29.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT29.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT29.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT29.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(2,9,2);
 
             }
-            else if(BT29.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT29.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(2,9,2);
@@ -1379,8 +1688,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 9;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT29.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -1390,11 +1700,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 2;
                     may = 9;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT29.setText("我弓");
                     GAN(max,may,1," ");
@@ -1407,16 +1718,23 @@ wturn=false;
             //ssss2
             if(BT210.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT210.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT210.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT210.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(2,10,2);
 
             }
-            else if(BT210.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT210.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(2,10,2);
@@ -1430,8 +1748,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 10;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT210.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -1441,11 +1760,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 2;
                     may = 10;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT210.setText("我弓");
                     GAN(max,may,1," ");
@@ -1458,16 +1778,23 @@ wturn=false;
             //ssss2
             if(BT211.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT211.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT211.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT211.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(2,11,2);
 
             }
-            else if(BT211.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT211.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(2,11,2);
@@ -1481,8 +1808,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 11;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT211.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -1492,11 +1820,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 2;
                     may = 11;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT211.setText("我弓");
                     GAN(max,may,1," ");
@@ -1509,16 +1838,23 @@ wturn=false;
             //ssss2
             if(BT212.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT212.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT212.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT212.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(2,12,2);
 
             }
-            else if(BT212.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT212.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(2,12,2);
@@ -1532,22 +1868,24 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 2;
                     mwy = 12;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT212.setText("我戰");
                     GAN(mwx,mwy,1," ");
                     //mywtrun=false;
-wturn=false;
+                    wturn=false;
                 }
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 2;
                     may = 12;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT212.setText("我弓");
                     GAN(max,may,1," ");
@@ -1560,16 +1898,23 @@ wturn=false;
             //ssss2
             if(BT31.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT31.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT31.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT31.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(3,1,2);
 
             }
-            else if(BT31.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT31.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(3,1,2);
@@ -1583,8 +1928,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 1;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT31.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -1594,11 +1940,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 3;
                     may = 1;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT31.setText("我弓");
                     GAN(max,may,1," ");
@@ -1611,16 +1958,23 @@ wturn=false;
             //ssss2
             if(BT32.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT32.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT32.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT32.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(3,2,2);
 
             }
-            else if(BT32.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT32.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(3,2,2);
@@ -1634,8 +1988,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 2;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT32.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -1645,11 +2000,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 3;
                     may = 2;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT32.setText("我弓");
                     GAN(max,may,1," ");
@@ -1662,16 +2018,23 @@ wturn=false;
             //ssss2
             if(BT33.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT33.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT33.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT33.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(3,3,2);
 
             }
-            else if(BT33.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT33.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(3,3,2);
@@ -1685,8 +2048,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 3;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT33.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -1696,11 +2060,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 3;
                     may = 3;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT33.setText("我弓");
                     GAN(max,may,1," ");
@@ -1713,16 +2078,23 @@ wturn=false;
             //ssss2
             if(BT34.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT34.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT34.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT34.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(3,4,2);
 
             }
-            else if(BT34.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT34.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(3,4,2);
@@ -1736,8 +2108,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 4;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT34.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -1747,11 +2120,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 3;
                     may = 4;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT34.setText("我弓");
                     GAN(max,may,1," ");
@@ -1764,16 +2138,23 @@ wturn=false;
             //ssss2
             if(BT35.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT35.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT35.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT35.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(3,5,2);
 
             }
-            else if(BT35.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT35.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(3,5,2);
@@ -1787,8 +2168,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 5;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT35.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -1798,11 +2180,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 3;
                     may = 5;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT35.setText("我弓");
                     GAN(max,may,1," ");
@@ -1815,16 +2198,23 @@ wturn=false;
             //ssss2
             if(BT36.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT36.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT36.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT36.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(3,6,2);
 
             }
-            else if(BT36.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT36.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(3,6,2);
@@ -1838,8 +2228,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 6;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT36.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -1849,11 +2240,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 3;
                     may = 6;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT36.setText("我弓");
                     GAN(max,may,1," ");
@@ -1866,16 +2258,23 @@ wturn=false;
             //ssss2
             if(BT37.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT37.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT37.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT37.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(3,7,2);
 
             }
-            else if(BT37.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT37.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(3,7,2);
@@ -1889,22 +2288,24 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 7;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT37.setText("我戰");
                     GAN(mwx,mwy,1," ");
                     //mywtrun=false;
-wturn=false;
+                    wturn=false;
                 }
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 3;
                     may = 7;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT37.setText("我弓");
                     GAN(max,may,1," ");
@@ -1917,16 +2318,23 @@ wturn=false;
             //ssss2
             if(BT38.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT38.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT38.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT38.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(3,8,2);
 
             }
-            else if(BT38.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT38.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(3,8,2);
@@ -1940,8 +2348,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 8;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT38.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -1951,11 +2360,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 3;
                     may = 8;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT38.setText("我弓");
                     GAN(max,may,1," ");
@@ -1968,16 +2378,23 @@ wturn=false;
             //ssss2
             if(BT39.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT39.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT39.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT39.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(3,9,2);
 
             }
-            else if(BT39.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT39.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(3,9,2);
@@ -1991,8 +2408,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 9;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT39.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -2002,11 +2420,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 3;
                     may = 9;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT39.setText("我弓");
                     GAN(max,may,1," ");
@@ -2019,16 +2438,23 @@ wturn=false;
             //ssss2
             if(BT310.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT310.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT310.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT310.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(3,10,2);
 
             }
-            else if(BT310.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT310.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(3,10,2);
@@ -2042,22 +2468,24 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 10;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT310.setText("我戰");
                     GAN(mwx,mwy,1," ");
                     //mywtrun=false;
-wturn=false;
+                    wturn=false;
                 }
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 3;
                     may = 10;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT310.setText("我弓");
                     GAN(max,may,1," ");
@@ -2070,16 +2498,23 @@ wturn=false;
             //ssss2
             if(BT311.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT311.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT311.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT311.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(3,11,2);
 
             }
-            else if(BT311.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT311.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(3,11,2);
@@ -2093,8 +2528,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 11;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT311.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -2104,11 +2540,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 3;
                     may = 11;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT311.setText("我弓");
                     GAN(max,may,1," ");
@@ -2121,16 +2558,23 @@ wturn=false;
             //ssss2
             if(BT312.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT312.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT312.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT312.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(3,12,2);
 
             }
-            else if(BT312.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT312.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(3,12,2);
@@ -2144,8 +2588,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 3;
                     mwy = 12;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT312.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -2155,11 +2600,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 3;
                     may = 12;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT312.setText("我弓");
                     GAN(max,may,1," ");
@@ -2172,16 +2618,23 @@ wturn=false;
             //ssss2
             if(BT41.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT41.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT41.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT41.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(4,1,2);
 
             }
-            else if(BT41.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT41.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(4,1,2);
@@ -2195,8 +2648,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 1;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT41.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -2206,11 +2660,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 4;
                     may = 1;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT41.setText("我弓");
                     GAN(max,may,1," ");
@@ -2223,16 +2678,23 @@ wturn=false;
             //ssss2
             if(BT42.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT42.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT42.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT42.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(4,2,2);
 
             }
-            else if(BT42.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT42.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(4,2,2);
@@ -2246,8 +2708,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 2;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT42.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -2257,11 +2720,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 4;
                     may = 2;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT42.setText("我弓");
                     GAN(max,may,1," ");
@@ -2274,16 +2738,23 @@ wturn=false;
             //ssss2
             if(BT43.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT43.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT43.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT43.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(4,3,2);
 
             }
-            else if(BT43.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT43.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(4,3,2);
@@ -2297,8 +2768,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 3;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT43.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -2308,11 +2780,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 4;
                     may = 3;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT43.setText("我弓");
                     GAN(max,may,1," ");
@@ -2325,16 +2798,23 @@ wturn=false;
             //ssss2
             if(BT44.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT44.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT44.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT44.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(4,4,2);
 
             }
-            else if(BT44.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT44.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(4,4,2);
@@ -2348,8 +2828,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 4;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT44.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -2359,11 +2840,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 4;
                     may = 4;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT44.setText("我弓");
                     GAN(max,may,1," ");
@@ -2376,16 +2858,23 @@ wturn=false;
             //ssss2
             if(BT45.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT45.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT45.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT45.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(4,5,2);
 
             }
-            else if(BT45.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT45.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(4,5,2);
@@ -2399,8 +2888,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 5;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT45.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -2410,11 +2900,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 4;
                     may = 5;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT45.setText("我弓");
                     GAN(max,may,1," ");
@@ -2427,16 +2918,23 @@ wturn=false;
             //ssss2
             if(BT46.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT46.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT46.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT46.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(4,6,2);
 
             }
-            else if(BT46.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT46.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(4,6,2);
@@ -2450,8 +2948,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 6;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT46.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -2461,11 +2960,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 4;
                     may = 6;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT46.setText("我弓");
                     GAN(max,may,1," ");
@@ -2478,16 +2978,23 @@ wturn=false;
             //ssss2
             if(BT47.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT47.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT47.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT47.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(4,7,2);
 
             }
-            else if(BT47.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT47.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(4,7,2);
@@ -2501,22 +3008,24 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 7;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT47.setText("我戰");
                     GAN(mwx,mwy,1," ");
                     //mywtrun=false;
-wturn=false;
+                    wturn=false;
                 }
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 4;
                     may = 7;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT47.setText("我弓");
                     GAN(max,may,1," ");
@@ -2529,16 +3038,23 @@ wturn=false;
             //ssss2
             if(BT48.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT48.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT48.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT48.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(4,8,2);
 
             }
-            else if(BT48.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT48.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(4,8,2);
@@ -2552,8 +3068,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 8;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT48.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -2563,11 +3080,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 4;
                     may = 8;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT48.setText("我弓");
                     GAN(max,may,1," ");
@@ -2580,16 +3098,23 @@ wturn=false;
             //ssss2
             if(BT49.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT49.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT49.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT49.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(4,9,2);
 
             }
-            else if(BT49.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT49.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(4,9,2);
@@ -2603,8 +3128,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 9;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT49.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -2614,11 +3140,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 4;
                     may = 9;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT49.setText("我弓");
                     GAN(max,may,1," ");
@@ -2631,16 +3158,23 @@ wturn=false;
             //ssss2
             if(BT410.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT410.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT410.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT410.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(4,10,2);
 
             }
-            else if(BT410.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT410.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(4,10,2);
@@ -2654,8 +3188,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 10;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT410.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -2665,11 +3200,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 4;
                     may = 10;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT410.setText("我弓");
                     GAN(max,may,1," ");
@@ -2682,16 +3218,23 @@ wturn=false;
             //ssss2
             if(BT411.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT411.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT411.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT411.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(4,11,2);
 
             }
-            else if(BT411.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT411.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(4,11,2);
@@ -2705,8 +3248,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 11;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT411.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -2716,11 +3260,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 4;
                     may = 11;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT411.setText("我弓");
                     GAN(max,may,1," ");
@@ -2733,16 +3278,23 @@ wturn=false;
             //ssss2
             if(BT412.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT412.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT412.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT412.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(4,12,2);
 
             }
-            else if(BT412.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT412.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(4,12,2);
@@ -2756,8 +3308,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 4;
                     mwy = 12;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT412.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -2767,11 +3320,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 4;
                     may = 12;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT412.setText("我弓");
                     GAN(max,may,1," ");
@@ -2784,16 +3338,23 @@ wturn=false;
             //ssss2
             if(BT51.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT51.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT51.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT51.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(5,1,2);
 
             }
-            else if(BT51.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT51.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(5,1,2);
@@ -2807,8 +3368,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 1;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT51.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -2818,11 +3380,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 5;
                     may = 1;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT51.setText("我弓");
                     GAN(max,may,1," ");
@@ -2835,16 +3398,23 @@ wturn=false;
             //ssss2
             if(BT52.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT52.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT52.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT52.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(5,2,2);
 
             }
-            else if(BT52.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT52.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(5,2,2);
@@ -2858,8 +3428,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 2;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT52.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -2869,11 +3440,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 5;
                     may = 2;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT52.setText("我弓");
                     GAN(max,may,1," ");
@@ -2886,16 +3458,23 @@ wturn=false;
             //ssss2
             if(BT53.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT53.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT53.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT53.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(5,3,2);
 
             }
-            else if(BT53.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT53.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(5,3,2);
@@ -2909,8 +3488,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 3;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT53.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -2920,11 +3500,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 5;
                     may = 3;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT53.setText("我弓");
                     GAN(max,may,1," ");
@@ -2937,16 +3518,23 @@ wturn=false;
             //ssss2
             if(BT54.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT54.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT54.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT54.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(5,4,2);
 
             }
-            else if(BT54.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT54.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(5,4,2);
@@ -2960,8 +3548,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 4;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT54.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -2971,11 +3560,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 5;
                     may = 4;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT54.setText("我弓");
                     GAN(max,may,1," ");
@@ -2988,16 +3578,23 @@ wturn=false;
             //ssss2
             if(BT55.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT55.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT55.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT55.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(5,5,2);
 
             }
-            else if(BT55.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT55.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(5,5,2);
@@ -3011,8 +3608,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 5;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT55.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -3022,11 +3620,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 5;
                     may = 5;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT55.setText("我弓");
                     GAN(max,may,1," ");
@@ -3039,16 +3638,23 @@ wturn=false;
             //ssss2
             if(BT56.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT56.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT56.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT56.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(5,6,2);
 
             }
-            else if(BT56.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT56.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(5,6,2);
@@ -3062,22 +3668,24 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 6;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT56.setText("我戰");
                     GAN(mwx,mwy,1," ");
                     //mywtrun=false;
-wturn=false;
+                    wturn=false;
                 }
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 5;
                     may = 6;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT56.setText("我弓");
                     GAN(max,may,1," ");
@@ -3090,16 +3698,23 @@ wturn=false;
             //ssss2
             if(BT57.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT57.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT57.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT57.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(5,7,2);
 
             }
-            else if(BT57.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT57.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(5,7,2);
@@ -3113,8 +3728,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 7;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT57.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -3124,11 +3740,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 5;
                     may = 7;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT57.setText("我弓");
                     GAN(max,may,1," ");
@@ -3141,16 +3758,23 @@ wturn=false;
             //ssss2
             if(BT58.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT58.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT58.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT58.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(5,8,2);
 
             }
-            else if(BT58.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT58.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(5,8,2);
@@ -3164,8 +3788,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 8;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT58.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -3175,11 +3800,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 5;
                     may = 8;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT58.setText("我弓");
                     GAN(max,may,1," ");
@@ -3192,16 +3818,23 @@ wturn=false;
             //ssss2
             if(BT59.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT59.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT59.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT59.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(5,9,2);
 
             }
-            else if(BT59.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT59.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(5,9,2);
@@ -3215,8 +3848,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 9;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT59.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -3226,11 +3860,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 5;
                     may = 9;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT59.setText("我弓");
                     GAN(max,may,1," ");
@@ -3243,16 +3878,23 @@ wturn=false;
             //ssss2
             if(BT510.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT510.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT510.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT510.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(5,10,2);
 
             }
-            else if(BT510.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT510.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(5,10,2);
@@ -3266,8 +3908,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 10;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT510.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -3277,11 +3920,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 5;
                     may = 10;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT510.setText("我弓");
                     GAN(max,may,1," ");
@@ -3294,16 +3938,23 @@ wturn=false;
             //ssss2
             if(BT511.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT511.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT511.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT511.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(5,11,2);
 
             }
-            else if(BT511.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT511.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(5,11,2);
@@ -3317,8 +3968,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 11;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT511.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -3328,11 +3980,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 5;
                     may = 11;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT511.setText("我弓");
                     GAN(max,may,1," ");
@@ -3345,16 +3998,23 @@ wturn=false;
             //ssss2
             if(BT512.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT512.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT512.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT512.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(5,12,2);
 
             }
-            else if(BT512.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT512.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(5,12,2);
@@ -3368,8 +4028,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 5;
                     mwy = 12;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT512.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -3379,11 +4040,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 5;
                     may = 12;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT512.setText("我弓");
                     GAN(max,may,1," ");
@@ -3396,16 +4058,23 @@ wturn=false;
             //ssss2
             if(BT61.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT61.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT61.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT61.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(6,1,2);
 
             }
-            else if(BT61.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT61.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(6,1,2);
@@ -3419,22 +4088,24 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 1;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT61.setText("我戰");
                     GAN(mwx,mwy,1," ");
                     //mywtrun=false;
-wturn=false;
+                    wturn=false;
                 }
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 6;
                     may = 1;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT61.setText("我弓");
                     GAN(max,may,1," ");
@@ -3447,16 +4118,23 @@ wturn=false;
             //ssss2
             if(BT62.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT62.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT62.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT62.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(6,2,2);
 
             }
-            else if(BT62.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT62.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(6,2,2);
@@ -3470,22 +4148,24 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 2;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT62.setText("我戰");
                     GAN(mwx,mwy,1," ");
                     //mywtrun=false;
- wturn=false;
+                    wturn=false;
                 }
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 6;
                     may = 2;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT62.setText("我弓");
                     GAN(max,may,1," ");
@@ -3498,16 +4178,23 @@ wturn=false;
             //ssss2
             if(BT63.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT63.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT63.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT63.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(6,3,2);
 
             }
-            else if(BT63.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT63.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(6,3,2);
@@ -3521,8 +4208,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 3;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT63.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -3532,11 +4220,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 6;
                     may = 3;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT63.setText("我弓");
                     GAN(max,may,1," ");
@@ -3549,16 +4238,23 @@ wturn=false;
             //ssss2
             if(BT64.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT64.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT64.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT64.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(6,4,2);
 
             }
-            else if(BT64.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT64.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(6,4,2);
@@ -3572,8 +4268,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 4;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT64.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -3583,11 +4280,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 6;
                     may = 4;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT64.setText("我弓");
                     GAN(max,may,1," ");
@@ -3600,16 +4298,23 @@ wturn=false;
             //ssss2
             if(BT65.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT65.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT65.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT65.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(6,5,2);
 
             }
-            else if(BT65.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT65.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(6,5,2);
@@ -3623,8 +4328,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 5;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT65.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -3634,11 +4340,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 6;
                     may = 5;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT65.setText("我弓");
                     GAN(max,may,1," ");
@@ -3651,16 +4358,23 @@ wturn=false;
             //ssss2
             if(BT66.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT66.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT66.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT66.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(6,6,2);
 
             }
-            else if(BT66.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT66.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(6,6,2);
@@ -3674,8 +4388,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 6;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT66.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -3685,11 +4400,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 6;
                     may = 6;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT66.setText("我弓");
                     GAN(max,may,1," ");
@@ -3702,16 +4418,23 @@ wturn=false;
             //ssss2
             if(BT67.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT67.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT67.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT67.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(6,7,2);
 
             }
-            else if(BT67.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT67.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(6,7,2);
@@ -3725,8 +4448,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 7;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT67.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -3736,11 +4460,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 6;
                     may = 7;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT67.setText("我弓");
                     GAN(max,may,1," ");
@@ -3753,16 +4478,23 @@ wturn=false;
             //ssss2
             if(BT68.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT68.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT68.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT68.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(6,8,2);
 
             }
-            else if(BT68.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT68.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(6,8,2);
@@ -3776,8 +4508,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 8;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT68.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -3787,11 +4520,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 6;
                     may = 8;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT68.setText("我弓");
                     GAN(max,may,1," ");
@@ -3804,16 +4538,23 @@ wturn=false;
             //ssss2
             if(BT69.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT69.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT69.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT69.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(6,9,2);
 
             }
-            else if(BT69.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT69.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(6,9,2);
@@ -3827,8 +4568,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 9;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT69.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -3838,11 +4580,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 6;
                     may = 9;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT69.setText("我弓");
                     GAN(max,may,1," ");
@@ -3855,16 +4598,23 @@ wturn=false;
             //ssss2
             if(BT610.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT610.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT610.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT610.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(6,10,2);
 
             }
-            else if(BT610.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT610.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(6,10,2);
@@ -3878,8 +4628,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 10;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT610.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -3889,11 +4640,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 6;
                     may = 10;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT610.setText("我弓");
                     GAN(max,may,1," ");
@@ -3906,16 +4658,23 @@ wturn=false;
             //ssss2
             if(BT611.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT611.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT611.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT611.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(6,11,2);
 
             }
-            else if(BT611.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT611.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(6,11,2);
@@ -3929,8 +4688,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 11;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT611.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -3940,11 +4700,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 6;
                     may = 11;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT611.setText("我弓");
                     GAN(max,may,1," ");
@@ -3957,16 +4718,23 @@ wturn=false;
             //ssss2
             if(BT612.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT612.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT612.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT612.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(6,12,2);
 
             }
-            else if(BT612.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT612.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(6,12,2);
@@ -3980,8 +4748,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 6;
                     mwy = 12;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT612.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -3991,11 +4760,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 6;
                     may = 12;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT612.setText("我弓");
                     GAN(max,may,1," ");
@@ -4008,16 +4778,23 @@ wturn=false;
             //ssss2
             if(BT71.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT71.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT71.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT71.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(7,1,2);
 
             }
-            else if(BT71.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT71.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(7,1,2);
@@ -4031,8 +4808,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 1;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT71.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -4042,11 +4820,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 7;
                     may = 1;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT71.setText("我弓");
                     GAN(max,may,1," ");
@@ -4059,16 +4838,23 @@ wturn=false;
             //ssss2
             if(BT72.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT72.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT72.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT72.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(7,2,2);
 
             }
-            else if(BT72.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT72.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(7,2,2);
@@ -4082,22 +4868,24 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 2;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT72.setText("我戰");
                     GAN(mwx,mwy,1," ");
                     //mywtrun=false;
-wturn=false;
+                    wturn=false;
                 }
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 7;
                     may = 2;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT72.setText("我弓");
                     GAN(max,may,1," ");
@@ -4110,16 +4898,23 @@ wturn=false;
             //ssss2
             if(BT73.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT73.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT73.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT73.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(7,3,2);
 
             }
-            else if(BT73.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT73.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(7,3,2);
@@ -4133,8 +4928,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 3;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT73.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -4144,11 +4940,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 7;
                     may = 3;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT73.setText("我弓");
                     GAN(max,may,1," ");
@@ -4161,16 +4958,23 @@ wturn=false;
             //ssss2
             if(BT74.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT74.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT74.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT74.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(7,4,2);
 
             }
-            else if(BT74.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT74.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(7,4,2);
@@ -4184,8 +4988,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 4;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT74.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -4195,11 +5000,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 7;
                     may = 4;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT74.setText("我弓");
                     GAN(max,may,1," ");
@@ -4212,16 +5018,23 @@ wturn=false;
             //ssss2
             if(BT75.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT75.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT75.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT75.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(7,5,2);
 
             }
-            else if(BT75.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT75.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(7,5,2);
@@ -4235,22 +5048,24 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 5;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT75.setText("我戰");
                     GAN(mwx,mwy,1," ");
                     //mywtrun=false;
- wturn=false;
+                    wturn=false;
                 }
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 7;
                     may = 5;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT75.setText("我弓");
                     GAN(max,may,1," ");
@@ -4263,16 +5078,23 @@ wturn=false;
             //ssss2
             if(BT76.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT76.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT76.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT76.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(7,6,2);
 
             }
-            else if(BT76.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT76.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(7,6,2);
@@ -4286,8 +5108,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 6;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT76.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -4297,11 +5120,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 7;
                     may = 6;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT76.setText("我弓");
                     GAN(max,may,1," ");
@@ -4314,16 +5138,23 @@ wturn=false;
             //ssss2
             if(BT77.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT77.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT77.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT77.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(7,7,2);
 
             }
-            else if(BT77.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT77.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(7,7,2);
@@ -4337,8 +5168,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 7;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT77.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -4348,11 +5180,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 7;
                     may = 7;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT77.setText("我弓");
                     GAN(max,may,1," ");
@@ -4365,16 +5198,23 @@ wturn=false;
             //ssss2
             if(BT78.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT78.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT78.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT78.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(7,8,2);
 
             }
-            else if(BT78.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT78.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(7,8,2);
@@ -4388,8 +5228,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 8;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT78.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -4399,11 +5240,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 7;
                     may = 8;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT78.setText("我弓");
                     GAN(max,may,1," ");
@@ -4416,16 +5258,23 @@ wturn=false;
             //ssss2
             if(BT79.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT79.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT79.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT79.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(7,9,2);
 
             }
-            else if(BT79.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT79.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(7,9,2);
@@ -4439,8 +5288,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 9;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT79.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -4450,11 +5300,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 7;
                     may = 9;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT79.setText("我弓");
                     GAN(max,may,1," ");
@@ -4467,16 +5318,23 @@ wturn=false;
             //ssss2
             if(BT710.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT710.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT710.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT710.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(7,10,2);
 
             }
-            else if(BT710.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT710.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(7,10,2);
@@ -4490,8 +5348,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 10;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT710.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -4501,11 +5360,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 7;
                     may = 10;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT710.setText("我弓");
                     GAN(max,may,1," ");
@@ -4518,16 +5378,23 @@ wturn=false;
             //ssss2
             if(BT711.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT711.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT711.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT711.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(7,11,2);
 
             }
-            else if(BT711.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT711.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(7,11,2);
@@ -4541,8 +5408,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 11;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT711.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -4552,11 +5420,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 7;
                     may = 11;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT711.setText("我弓");
                     GAN(max,may,1," ");
@@ -4569,16 +5438,23 @@ wturn=false;
             //ssss2
             if(BT712.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT712.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT712.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT712.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(7,12,2);
 
             }
-            else if(BT712.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT712.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(7,12,2);
@@ -4592,8 +5468,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 7;
                     mwy = 12;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT712.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -4603,11 +5480,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 7;
                     may = 12;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT712.setText("我弓");
                     GAN(max,may,1," ");
@@ -4620,16 +5498,23 @@ wturn=false;
             //ssss2
             if(BT81.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT81.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT81.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT81.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(8,1,2);
 
             }
-            else if(BT81.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT81.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(8,1,2);
@@ -4643,8 +5528,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 1;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT81.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -4654,11 +5540,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 8;
                     may = 1;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT81.setText("我弓");
                     GAN(max,may,1," ");
@@ -4671,16 +5558,23 @@ wturn=false;
             //ssss2
             if(BT82.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT82.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT82.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT82.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(8,2,2);
 
             }
-            else if(BT82.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT82.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(8,2,2);
@@ -4694,8 +5588,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 2;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT82.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -4705,11 +5600,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 8;
                     may = 2;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT82.setText("我弓");
                     GAN(max,may,1," ");
@@ -4722,16 +5618,23 @@ wturn=false;
             //ssss2
             if(BT83.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT83.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT83.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT83.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(8,3,2);
 
             }
-            else if(BT83.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT83.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(8,3,2);
@@ -4745,8 +5648,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 3;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT83.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -4756,11 +5660,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 8;
                     may = 3;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT83.setText("我弓");
                     GAN(max,may,1," ");
@@ -4773,16 +5678,23 @@ wturn=false;
             //ssss2
             if(BT84.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT84.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT84.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT84.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(8,4,2);
 
             }
-            else if(BT84.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT84.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(8,4,2);
@@ -4796,8 +5708,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 4;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT84.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -4807,11 +5720,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 8;
                     may = 4;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT84.setText("我弓");
                     GAN(max,may,1," ");
@@ -4824,16 +5738,23 @@ wturn=false;
             //ssss2
             if(BT85.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT85.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT85.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT85.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(8,5,2);
 
             }
-            else if(BT85.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT85.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(8,5,2);
@@ -4847,8 +5768,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 5;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT85.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -4858,11 +5780,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 8;
                     may = 5;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT85.setText("我弓");
                     GAN(max,may,1," ");
@@ -4875,16 +5798,23 @@ wturn=false;
             //ssss2
             if(BT86.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT86.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT86.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT86.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(8,6,2);
 
             }
-            else if(BT86.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT86.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(8,6,2);
@@ -4898,8 +5828,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 6;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT86.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -4909,11 +5840,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 8;
                     may = 6;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT86.setText("我弓");
                     GAN(max,may,1," ");
@@ -4926,16 +5858,23 @@ wturn=false;
             //ssss2
             if(BT87.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT87.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT87.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT87.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(8,7,2);
 
             }
-            else if(BT87.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT87.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(8,7,2);
@@ -4949,8 +5888,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 7;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT87.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -4960,11 +5900,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 8;
                     may = 7;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT87.setText("我弓");
                     GAN(max,may,1," ");
@@ -4977,16 +5918,23 @@ wturn=false;
             //ssss2
             if(BT88.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT88.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT88.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT88.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(8,8,2);
 
             }
-            else if(BT88.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT88.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(8,8,2);
@@ -5000,22 +5948,24 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 8;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT88.setText("我戰");
                     GAN(mwx,mwy,1," ");
                     //mywtrun=false;
- wturn=false;
+                    wturn=false;
                 }
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 8;
                     may = 8;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT88.setText("我弓");
                     GAN(max,may,1," ");
@@ -5028,16 +5978,23 @@ wturn=false;
             //ssss2
             if(BT89.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT89.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT89.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT89.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(8,9,2);
 
             }
-            else if(BT89.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT89.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(8,9,2);
@@ -5051,22 +6008,24 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 9;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT89.setText("我戰");
                     GAN(mwx,mwy,1," ");
                     //mywtrun=false;
- wturn=false;
+                    wturn=false;
                 }
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 8;
                     may = 9;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT89.setText("我弓");
                     GAN(max,may,1," ");
@@ -5079,16 +6038,23 @@ wturn=false;
             //ssss2
             if(BT810.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT810.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT810.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT810.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(8,10,2);
 
             }
-            else if(BT810.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT810.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(8,10,2);
@@ -5102,8 +6068,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 10;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT810.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -5113,11 +6080,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 8;
                     may = 10;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT810.setText("我弓");
                     GAN(max,may,1," ");
@@ -5130,16 +6098,23 @@ wturn=false;
             //ssss2
             if(BT811.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT811.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT811.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT811.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(8,11,2);
 
             }
-            else if(BT811.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT811.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(8,11,2);
@@ -5153,22 +6128,24 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 11;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT811.setText("我戰");
                     GAN(mwx,mwy,1," ");
                     //mywtrun=false;
-wturn=false;
+                    wturn=false;
                 }
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 8;
                     may = 11;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT811.setText("我弓");
                     GAN(max,may,1," ");
@@ -5181,16 +6158,23 @@ wturn=false;
             //ssss2
             if(BT812.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT812.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT812.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT812.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(8,12,2);
 
             }
-            else if(BT812.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT812.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(8,12,2);
@@ -5204,22 +6188,24 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 8;
                     mwy = 12;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT812.setText("我戰");
                     GAN(mwx,mwy,1," ");
                     //mywtrun=false;
-wturn=false;
+                    wturn=false;
                 }
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 8;
                     may = 12;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT812.setText("我弓");
                     GAN(max,may,1," ");
@@ -5232,16 +6218,23 @@ wturn=false;
             //ssss2
             if(BT91.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT91.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT91.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT91.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(9,1,2);
 
             }
-            else if(BT91.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT91.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(9,1,2);
@@ -5255,8 +6248,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 1;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT91.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -5266,11 +6260,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 9;
                     may = 1;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT91.setText("我弓");
                     GAN(max,may,1," ");
@@ -5283,16 +6278,23 @@ wturn=false;
             //ssss2
             if(BT92.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT92.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT92.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT92.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(9,2,2);
 
             }
-            else if(BT92.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT92.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(9,2,2);
@@ -5306,8 +6308,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 2;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT92.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -5317,11 +6320,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 9;
                     may = 2;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT92.setText("我弓");
                     GAN(max,may,1," ");
@@ -5334,16 +6338,23 @@ wturn=false;
             //ssss2
             if(BT93.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT93.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT93.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT93.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(9,3,2);
 
             }
-            else if(BT93.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT93.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(9,3,2);
@@ -5357,8 +6368,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 3;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT93.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -5368,11 +6380,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 9;
                     may = 3;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT93.setText("我弓");
                     GAN(max,may,1," ");
@@ -5385,16 +6398,23 @@ wturn=false;
             //ssss2
             if(BT94.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT94.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT94.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT94.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(9,4,2);
 
             }
-            else if(BT94.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT94.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(9,4,2);
@@ -5408,8 +6428,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 4;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT94.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -5419,11 +6440,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 9;
                     may = 4;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT94.setText("我弓");
                     GAN(max,may,1," ");
@@ -5436,16 +6458,23 @@ wturn=false;
             //ssss2
             if(BT95.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT95.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT95.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT95.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(9,5,2);
 
             }
-            else if(BT95.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT95.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(9,5,2);
@@ -5459,8 +6488,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 5;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT95.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -5470,11 +6500,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 9;
                     may = 5;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT95.setText("我弓");
                     GAN(max,may,1," ");
@@ -5487,16 +6518,23 @@ wturn=false;
             //ssss2
             if(BT96.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT96.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT96.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT96.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(9,6,2);
 
             }
-            else if(BT96.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT96.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(9,6,2);
@@ -5510,8 +6548,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 6;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT96.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -5521,11 +6560,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 9;
                     may = 6;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT96.setText("我弓");
                     GAN(max,may,1," ");
@@ -5538,16 +6578,23 @@ wturn=false;
             //ssss2
             if(BT97.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT97.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT97.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT97.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(9,7,2);
 
             }
-            else if(BT97.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT97.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(9,7,2);
@@ -5561,8 +6608,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 7;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT97.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -5572,11 +6620,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 9;
                     may = 7;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT97.setText("我弓");
                     GAN(max,may,1," ");
@@ -5589,16 +6638,23 @@ wturn=false;
             //ssss2
             if(BT98.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT98.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT98.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT98.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(9,8,2);
 
             }
-            else if(BT98.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT98.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(9,8,2);
@@ -5612,8 +6668,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 8;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT98.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -5623,11 +6680,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 9;
                     may = 8;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT98.setText("我弓");
                     GAN(max,may,1," ");
@@ -5640,16 +6698,23 @@ wturn=false;
             //ssss2
             if(BT99.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT99.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT99.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT99.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(9,9,2);
 
             }
-            else if(BT99.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT99.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(9,9,2);
@@ -5663,8 +6728,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 9;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT99.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -5674,11 +6740,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 9;
                     may = 9;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT99.setText("我弓");
                     GAN(max,may,1," ");
@@ -5691,16 +6758,23 @@ wturn=false;
             //ssss2
             if(BT910.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT910.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT910.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT910.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(9,10,2);
 
             }
-            else if(BT910.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT910.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(9,10,2);
@@ -5714,8 +6788,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 10;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT910.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -5725,11 +6800,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 9;
                     may = 10;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT910.setText("我弓");
                     GAN(max,may,1," ");
@@ -5742,16 +6818,23 @@ wturn=false;
             //ssss2
             if(BT911.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT911.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT911.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT911.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(9,11,2);
 
             }
-            else if(BT911.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT911.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(9,11,2);
@@ -5765,8 +6848,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 11;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT911.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -5776,11 +6860,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 9;
                     may = 11;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT911.setText("我弓");
                     GAN(max,may,1," ");
@@ -5793,16 +6878,23 @@ wturn=false;
             //ssss2
             if(BT912.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT912.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT912.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT912.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(9,12,2);
 
             }
-            else if(BT912.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT912.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(9,12,2);
@@ -5816,8 +6908,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 9;
                     mwy = 12;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT912.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -5827,11 +6920,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 9;
                     may = 12;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT912.setText("我弓");
                     GAN(max,may,1," ");
@@ -5844,16 +6938,23 @@ wturn=false;
             //ssss2
             if(BT101.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT101.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT101.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT101.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(10,1,2);
 
             }
-            else if(BT101.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT101.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(10,1,2);
@@ -5867,8 +6968,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 1;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT101.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -5878,11 +6980,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 10;
                     may = 1;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT101.setText("我弓");
                     GAN(max,may,1," ");
@@ -5895,16 +6998,23 @@ wturn=false;
             //ssss2
             if(BT102.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT102.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT102.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT102.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(10,2,2);
 
             }
-            else if(BT102.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT102.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(10,2,2);
@@ -5918,8 +7028,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 2;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT102.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -5929,11 +7040,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 10;
                     may = 2;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT102.setText("我弓");
                     GAN(max,may,1," ");
@@ -5946,16 +7058,23 @@ wturn=false;
             //ssss2
             if(BT103.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT103.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT103.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT103.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(10,3,2);
 
             }
-            else if(BT103.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT103.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(10,3,2);
@@ -5969,8 +7088,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 3;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT103.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -5980,11 +7100,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 10;
                     may = 3;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT103.setText("我弓");
                     GAN(max,may,1," ");
@@ -5997,16 +7118,23 @@ wturn=false;
             //ssss2
             if(BT104.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT104.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT104.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT104.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(10,4,2);
 
             }
-            else if(BT104.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT104.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(10,4,2);
@@ -6020,8 +7148,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 4;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT104.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -6031,11 +7160,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 10;
                     may = 4;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT104.setText("我弓");
                     GAN(max,may,1," ");
@@ -6048,16 +7178,23 @@ wturn=false;
             //ssss2
             if(BT105.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT105.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT105.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT105.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(10,5,2);
 
             }
-            else if(BT105.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT105.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(10,5,2);
@@ -6071,22 +7208,24 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 5;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT105.setText("我戰");
                     GAN(mwx,mwy,1," ");
                     //mywtrun=false;
- wturn=false;
+                    wturn=false;
                 }
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 10;
                     may = 5;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT105.setText("我弓");
                     GAN(max,may,1," ");
@@ -6099,16 +7238,23 @@ wturn=false;
             //ssss2
             if(BT106.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT106.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT106.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT106.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(10,6,2);
 
             }
-            else if(BT106.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT106.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(10,6,2);
@@ -6122,8 +7268,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 6;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT106.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -6133,11 +7280,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 10;
                     may = 6;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT106.setText("我弓");
                     GAN(max,may,1," ");
@@ -6150,16 +7298,23 @@ wturn=false;
             //ssss2
             if(BT107.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT107.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT107.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT107.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(10,7,2);
 
             }
-            else if(BT107.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT107.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(10,7,2);
@@ -6173,8 +7328,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 7;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT107.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -6184,11 +7340,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 10;
                     may = 7;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT107.setText("我弓");
                     GAN(max,may,1," ");
@@ -6201,16 +7358,23 @@ wturn=false;
             //ssss2
             if(BT108.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT108.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT108.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT108.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(10,8,2);
 
             }
-            else if(BT108.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT108.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(10,8,2);
@@ -6224,8 +7388,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 8;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT108.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -6235,11 +7400,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 10;
                     may = 8;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT108.setText("我弓");
                     GAN(max,may,1," ");
@@ -6252,16 +7418,23 @@ wturn=false;
             //ssss2
             if(BT109.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT109.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT109.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT109.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(10,9,2);
 
             }
-            else if(BT109.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT109.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(10,9,2);
@@ -6275,22 +7448,24 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 9;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT109.setText("我戰");
                     GAN(mwx,mwy,1," ");
                     //mywtrun=false;
-wturn=false;
+                    wturn=false;
                 }
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 10;
                     may = 9;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT109.setText("我弓");
                     GAN(max,may,1," ");
@@ -6303,16 +7478,23 @@ wturn=false;
             //ssss2
             if(BT1010.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT1010.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT1010.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT1010.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(10,10,2);
 
             }
-            else if(BT1010.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT1010.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(10,10,2);
@@ -6326,22 +7508,24 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 10;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT1010.setText("我戰");
                     GAN(mwx,mwy,1," ");
                     //mywtrun=false;
-wturn=false;
+                    wturn=false;
                 }
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 10;
                     may = 10;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT1010.setText("我弓");
                     GAN(max,may,1," ");
@@ -6354,16 +7538,23 @@ wturn=false;
             //ssss2
             if(BT1011.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT1011.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT1011.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT1011.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(10,11,2);
 
             }
-            else if(BT1011.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT1011.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(10,11,2);
@@ -6377,8 +7568,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 11;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT1011.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -6388,11 +7580,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 10;
                     may = 11;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT1011.setText("我弓");
                     GAN(max,may,1," ");
@@ -6405,16 +7598,23 @@ wturn=false;
             //ssss2
             if(BT1012.getText()=="敵戰")
             {
+                wdmg=true;
                 atkenw();
-                client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
             }
-            else if(BT1012.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true)
+            else if(BT1012.getText()=="敵弓")
+            {
+                admg=true;
+                atkenw();
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
+            }
+            else if(BT1012.getText()=="我戰" && mywtrun==true && mywac==false && wturn==true && WATKflag==false)
             {
                 mywac=true;
                 range(10,12,2);
 
             }
-            else if(BT1012.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true)
+            else if(BT1012.getText()=="我弓" && mywtrun==true && myaac==false && aturn==true && AATKflag==false)
             {
                 myaac=true;
                 range(10,12,2);
@@ -6428,8 +7628,9 @@ wturn=false;
                     textclear(mwx,mwy,22);
                     mwx = 10;
                     mwy = 12;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT1012.setText("我戰");
                     GAN(mwx,mwy,1," ");
@@ -6439,11 +7640,12 @@ wturn=false;
                 if(myaac==true)
                 {
                     range(max,may,2,1);
-                     textclear(max,may,22);
+                    textclear(max,may,22);
                     max = 10;
                     may = 12;
-                    client.update(mwx,mwy,ewx,ewy,dpc,mwar.hp,ewar.hp);
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                     ATTACK.setDisable(false);
+                    SKILL.setDisable(false);
                     WAIT.setDisable(false);
                     BT1012.setText("我弓");
                     GAN(max,may,1," ");
