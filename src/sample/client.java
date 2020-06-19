@@ -44,7 +44,7 @@ public class client extends Thread{
     public void run()
     {
         try {
-            client = new Socket("localhost", 7777);
+            client = new Socket("120.110.11.2", 7777);
             output = new PrintWriter(client.getOutputStream(), true);
             input = new BufferedReader(new InputStreamReader(client.getInputStream()));
             mywtrun=Boolean.parseBoolean(input.readLine());

@@ -122,6 +122,8 @@ public class Controller implements Initializable {
                 myaac=false;
                 wturn=true;
                 aturn=true;
+                WATKflag=false;
+                AATKflag=false;
                 turnend.setDisable(false);
                 animationTimer.stop();
                 GAN(mwx,mwy,0," ");
@@ -224,16 +226,19 @@ public class Controller implements Initializable {
                 alert.setContentText("MP不足");
                 alert.showAndWait();
                 marc.mp=marc.mpold;
+                client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                 }
                 else if(choiceDialog.getResult()!=null) {
                     marc.atk = marc.skidmg;
                     range(max, may, marc.skillrange);
                     myaac = false;
                     AATKflag = true;
+                    marc.mpold=marc.mp;
                  }
                 else
                 {
                     marc.mp=marc.mpold;
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                 }
             }
             else if(mywac==true || WATKflag==true) {
@@ -250,16 +255,19 @@ public class Controller implements Initializable {
                     alert.setContentText("MP不足");
                     alert.showAndWait();
                     mwar.mp=mwar.mpold;
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                 }
                 else if(choiceDialog.getResult()!=null) {
                     mwar.atk = mwar.skidmg;
                     range(mwx, mwy, mwar.skillrange);
                     mywac = false;
                     WATKflag = true;
+                    mwar.mpold=mwar.mp;
                 }
                 else
                 {
                     mwar.mp=mwar.mpold;
+                    client.update(mwx,mwy,marc.hp,earc.hp,max,may,ewx,ewy,dpc,mwar.hp,ewar.hp,marc.mp,earc.mp,ewar.mp,mwar.mp);
                 }
             }
         });
@@ -295,16 +303,6 @@ public class Controller implements Initializable {
             end();
         });
 
-        testturn.setOnAction(e->{
-            enwtrun=false;
-            mywtrun=true;
-            turnend.setDisable(false);
-            GAN(mwx,mwy,0," ");
-            GAN(max,may,0," ");
-            aturn=true;
-            wturn=true;
-            animationTimer.stop();
-        });
     }
     public void atkenw()
     {
@@ -511,6 +509,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT12.setOnAction(e->{
@@ -571,6 +571,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT13.setOnAction(e->{
@@ -631,6 +633,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT14.setOnAction(e->{
@@ -691,6 +695,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT15.setOnAction(e->{
@@ -751,6 +757,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT16.setOnAction(e->{
@@ -811,6 +819,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT17.setOnAction(e->{
@@ -871,6 +881,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT18.setOnAction(e->{
@@ -931,6 +943,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT19.setOnAction(e->{
@@ -991,6 +1005,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT110.setOnAction(e->{
@@ -1051,6 +1067,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT111.setOnAction(e->{
@@ -1111,6 +1129,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT112.setOnAction(e->{
@@ -1171,6 +1191,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT21.setOnAction(e->{
@@ -1231,6 +1253,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT22.setOnAction(e->{
@@ -1291,6 +1315,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT23.setOnAction(e->{
@@ -1351,6 +1377,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT24.setOnAction(e->{
@@ -1411,6 +1439,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT25.setOnAction(e->{
@@ -1471,6 +1501,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT26.setOnAction(e->{
@@ -1531,6 +1563,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT27.setOnAction(e->{
@@ -1591,6 +1625,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT28.setOnAction(e->{
@@ -1651,6 +1687,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT29.setOnAction(e->{
@@ -1711,6 +1749,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT210.setOnAction(e->{
@@ -1771,6 +1811,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT211.setOnAction(e->{
@@ -1831,6 +1873,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT212.setOnAction(e->{
@@ -1891,6 +1935,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT31.setOnAction(e->{
@@ -1951,6 +1997,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT32.setOnAction(e->{
@@ -2011,6 +2059,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT33.setOnAction(e->{
@@ -2071,6 +2121,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT34.setOnAction(e->{
@@ -2131,6 +2183,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT35.setOnAction(e->{
@@ -2191,6 +2245,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT36.setOnAction(e->{
@@ -2251,6 +2307,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT37.setOnAction(e->{
@@ -2311,6 +2369,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT38.setOnAction(e->{
@@ -2371,6 +2431,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT39.setOnAction(e->{
@@ -2431,6 +2493,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT310.setOnAction(e->{
@@ -2491,6 +2555,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT311.setOnAction(e->{
@@ -2551,6 +2617,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT312.setOnAction(e->{
@@ -2611,6 +2679,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT41.setOnAction(e->{
@@ -2671,6 +2741,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT42.setOnAction(e->{
@@ -2731,6 +2803,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT43.setOnAction(e->{
@@ -2791,6 +2865,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT44.setOnAction(e->{
@@ -2851,6 +2927,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT45.setOnAction(e->{
@@ -2911,6 +2989,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT46.setOnAction(e->{
@@ -2971,6 +3051,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT47.setOnAction(e->{
@@ -3031,6 +3113,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT48.setOnAction(e->{
@@ -3091,6 +3175,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT49.setOnAction(e->{
@@ -3151,6 +3237,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT410.setOnAction(e->{
@@ -3211,6 +3299,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT411.setOnAction(e->{
@@ -3271,6 +3361,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT412.setOnAction(e->{
@@ -3331,6 +3423,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT51.setOnAction(e->{
@@ -3391,6 +3485,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT52.setOnAction(e->{
@@ -3451,6 +3547,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT53.setOnAction(e->{
@@ -3511,6 +3609,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT54.setOnAction(e->{
@@ -3571,6 +3671,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT55.setOnAction(e->{
@@ -3631,6 +3733,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT56.setOnAction(e->{
@@ -3691,6 +3795,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT57.setOnAction(e->{
@@ -3751,6 +3857,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT58.setOnAction(e->{
@@ -3811,6 +3919,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT59.setOnAction(e->{
@@ -3871,6 +3981,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT510.setOnAction(e->{
@@ -3931,6 +4043,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT511.setOnAction(e->{
@@ -3991,6 +4105,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT512.setOnAction(e->{
@@ -4051,6 +4167,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT61.setOnAction(e->{
@@ -4111,6 +4229,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT62.setOnAction(e->{
@@ -4171,6 +4291,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT63.setOnAction(e->{
@@ -4231,6 +4353,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT64.setOnAction(e->{
@@ -4291,6 +4415,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT65.setOnAction(e->{
@@ -4351,6 +4477,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT66.setOnAction(e->{
@@ -4411,6 +4539,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT67.setOnAction(e->{
@@ -4471,6 +4601,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT68.setOnAction(e->{
@@ -4531,6 +4663,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT69.setOnAction(e->{
@@ -4591,6 +4725,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT610.setOnAction(e->{
@@ -4651,6 +4787,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT611.setOnAction(e->{
@@ -4711,6 +4849,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT612.setOnAction(e->{
@@ -4771,6 +4911,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT71.setOnAction(e->{
@@ -4831,6 +4973,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT72.setOnAction(e->{
@@ -4891,6 +5035,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT73.setOnAction(e->{
@@ -4951,6 +5097,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT74.setOnAction(e->{
@@ -5011,6 +5159,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT75.setOnAction(e->{
@@ -5071,6 +5221,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT76.setOnAction(e->{
@@ -5131,6 +5283,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT77.setOnAction(e->{
@@ -5191,6 +5345,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT78.setOnAction(e->{
@@ -5251,6 +5407,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT79.setOnAction(e->{
@@ -5311,6 +5469,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT710.setOnAction(e->{
@@ -5371,6 +5531,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT711.setOnAction(e->{
@@ -5431,6 +5593,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT712.setOnAction(e->{
@@ -5491,6 +5655,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT81.setOnAction(e->{
@@ -5551,6 +5717,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT82.setOnAction(e->{
@@ -5611,6 +5779,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT83.setOnAction(e->{
@@ -5671,6 +5841,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT84.setOnAction(e->{
@@ -5731,6 +5903,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT85.setOnAction(e->{
@@ -5791,6 +5965,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT86.setOnAction(e->{
@@ -5851,6 +6027,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT87.setOnAction(e->{
@@ -5911,6 +6089,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT88.setOnAction(e->{
@@ -5971,6 +6151,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT89.setOnAction(e->{
@@ -6031,6 +6213,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT810.setOnAction(e->{
@@ -6091,6 +6275,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT811.setOnAction(e->{
@@ -6151,6 +6337,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT812.setOnAction(e->{
@@ -6211,6 +6399,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT91.setOnAction(e->{
@@ -6271,6 +6461,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT92.setOnAction(e->{
@@ -6331,6 +6523,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT93.setOnAction(e->{
@@ -6391,6 +6585,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT94.setOnAction(e->{
@@ -6451,6 +6647,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT95.setOnAction(e->{
@@ -6511,6 +6709,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT96.setOnAction(e->{
@@ -6571,6 +6771,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT97.setOnAction(e->{
@@ -6631,6 +6833,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT98.setOnAction(e->{
@@ -6691,6 +6895,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT99.setOnAction(e->{
@@ -6751,6 +6957,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT910.setOnAction(e->{
@@ -6811,6 +7019,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT911.setOnAction(e->{
@@ -6871,6 +7081,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT912.setOnAction(e->{
@@ -6931,6 +7143,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT101.setOnAction(e->{
@@ -6991,6 +7205,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT102.setOnAction(e->{
@@ -7051,6 +7267,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT103.setOnAction(e->{
@@ -7111,6 +7329,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT104.setOnAction(e->{
@@ -7171,6 +7391,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT105.setOnAction(e->{
@@ -7231,6 +7453,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT106.setOnAction(e->{
@@ -7291,6 +7515,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT107.setOnAction(e->{
@@ -7351,6 +7577,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT108.setOnAction(e->{
@@ -7411,6 +7639,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT109.setOnAction(e->{
@@ -7471,6 +7701,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT1010.setOnAction(e->{
@@ -7531,6 +7763,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT1011.setOnAction(e->{
@@ -7591,6 +7825,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
         BT1012.setOnAction(e->{
@@ -7651,6 +7887,8 @@ public class Controller implements Initializable {
                     aturn=false;
                 }
                 turnea();
+                mwar.mp=mwar.mpold;
+                marc.mp=marc.mpold;
             }
         });
     }

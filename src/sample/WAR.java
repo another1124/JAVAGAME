@@ -10,7 +10,7 @@ public class WAR {
     public int skillcount=1;
     public String[] skillarry={"會心一擊"};
     public int[] skillmp={20};
-    public int mpold=50;
+    public int mpold=40;
     public WAR() {
     }
     public void skilluse(String skillname)
