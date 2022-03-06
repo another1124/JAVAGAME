@@ -24,7 +24,7 @@
       <RowConstraints minHeight="10.0" prefHeight="15.0" vgrow="SOMETIMES" />
   </rowConstraints>
    <children>
-      <Button fx:id="start" mnemonicParsing="false" prefHeight="22.0" prefWidth="78.0" text="開始遊戲" GridPane.columnIndex="4" GridPane.rowIndex="3" />
-      <Button fx:id="end" mnemonicParsing="false" prefHeight="22.0" prefWidth="78.0" text="結束遊戲" GridPane.columnIndex="4" GridPane.rowIndex="4" />
+      <Button fx:id="start" mnemonicParsing="false" prefHeight="23.0" prefWidth="78.0" text="開始遊戲" GridPane.columnIndex="4" GridPane.rowIndex="3" />
+      <Button fx:id="end" mnemonicParsing="false" prefHeight="23.0" prefWidth="78.0" text="結束遊戲" GridPane.columnIndex="4" GridPane.rowIndex="4" />
    </children>
 </GridPane>
